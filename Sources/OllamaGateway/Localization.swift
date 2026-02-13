@@ -91,7 +91,9 @@ enum L10n {
 
     // Update
     static var updateAvailable: String { s("发现新版本", "Update Available") }
-    static var updateMessage: String { s("新版本 %@ 已发布，是否前往下载？", "Version %@ is available. Download now?") }
+    static var updateMessage: String {
+        s("新版本 %@ 已发布，是否前往下载？", "Version %@ is available. Download now?")
+    }
     static var download: String { s("前往下载", "Download") }
     static var later: String { s("稍后", "Later") }
     static var upToDate: String { s("已是最新版本", "Up to date") }

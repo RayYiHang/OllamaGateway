@@ -96,7 +96,8 @@ final class UpdateChecker {
     }
 
     func check() {
-        let urlStr = "https://api.github.com/repos/\(Self.repoOwner)/\(Self.repoName)/releases/latest"
+        let urlStr =
+            "https://api.github.com/repos/\(Self.repoOwner)/\(Self.repoName)/releases/latest"
         guard let url = URL(string: urlStr) else { return }
 
         var request = URLRequest(url: url)
@@ -105,13 +106,19 @@ final class UpdateChecker {
 
         URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
             guard let data = data, error == nil else { return }
-            guard let release = try? JSONDecoder().decode(GitHubRelease.self, from: data) else { return }
+            guard let release = try? JSONDecoder().decode(GitHubRelease.self, from: data) else {
+                return
+            }
             guard !release.prerelease, !release.draft else { return }
 
-            let remoteVersion = release.tag_name.hasPrefix("v") ? String(release.tag_name.dropFirst()) : release.tag_name
+            let remoteVersion =
+                release.tag_name.hasPrefix("v")
+                ? String(release.tag_name.dropFirst()) : release.tag_name
             if Self.isNewer(remote: remoteVersion, current: Self.currentVersion) {
                 Task { @MainActor [weak self] in
-                    self?.appState?.updateAvailable = (version: remoteVersion, url: release.html_url)
+                    self?.appState?.updateAvailable = (
+                        version: remoteVersion, url: release.html_url
+                    )
                 }
             }
         }.resume()

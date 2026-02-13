@@ -16,7 +16,10 @@ struct HTTPRequest {
             return nil
         }
 
-        guard let headerStr = String(data: data[data.startIndex..<headerEndRange.lowerBound], encoding: .utf8) else {
+        guard
+            let headerStr = String(
+                data: data[data.startIndex..<headerEndRange.lowerBound], encoding: .utf8)
+        else {
             return nil
         }
 
@@ -32,7 +35,8 @@ struct HTTPRequest {
         var headers: [String: String] = [:]
         for line in lines.dropFirst() {
             guard let colonIdx = line.firstIndex(of: ":") else { continue }
-            let key = line[line.startIndex..<colonIdx].trimmingCharacters(in: .whitespaces).lowercased()
+            let key = line[line.startIndex..<colonIdx].trimmingCharacters(in: .whitespaces)
+                .lowercased()
             let value = line[line.index(after: colonIdx)...].trimmingCharacters(in: .whitespaces)
             headers[key] = value
         }
@@ -42,14 +46,16 @@ struct HTTPRequest {
 
         if let clStr = headers["content-length"], let cl = Int(clStr) {
             let available = data.count - bodyStart
-            guard available >= cl else { return nil } // Need more data
+            guard available >= cl else { return nil }  // Need more data
             bodyData = data[bodyStart..<(bodyStart + cl)]
         } else {
             bodyData = data[bodyStart..<data.endIndex]
         }
 
         let totalConsumed = headerEndRange.upperBound + bodyData.count
-        return (HTTPRequest(method: method, path: path, headers: headers, body: bodyData), totalConsumed)
+        return (
+            HTTPRequest(method: method, path: path, headers: headers, body: bodyData), totalConsumed
+        )
     }
 }
 
@@ -95,7 +101,9 @@ final class ProxyServer {
         params.requiredInterfaceType = .loopback
 
         guard let port = NWEndpoint.Port(rawValue: config.port) else {
-            throw NSError(domain: "ProxyServer", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid port: \(config.port)"])
+            throw NSError(
+                domain: "ProxyServer", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid port: \(config.port)"])
         }
 
         let newListener = try NWListener(using: params, on: port)
@@ -140,7 +148,8 @@ final class ProxyServer {
         var buffer = Data()
 
         func readMore() {
-            connection.receive(minimumIncompleteLength: 1, maximumLength: 131072) { [weak self] data, _, isComplete, error in
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 131072) {
+                [weak self] data, _, isComplete, error in
                 guard let self = self else {
                     connection.cancel()
                     return
@@ -191,7 +200,9 @@ final class ProxyServer {
         // Verify API key
         guard verifyAPIKey(request) else {
             sendError(connection, status: 401, message: "Unauthorized")
-            logRequest(method: request.method, path: request.path, status: 401, startTime: startTime, clientIP: clientIP)
+            logRequest(
+                method: request.method, path: request.path, status: 401, startTime: startTime,
+                clientIP: clientIP)
             return
         }
 
@@ -215,25 +226,32 @@ final class ProxyServer {
     private func handleHealthCheck(_ connection: NWConnection, startTime: Date, clientIP: String) {
         guard let ollamaURL = URL(string: config.ollamaBaseURL) else {
             sendError(connection, status: 502, message: "Invalid Ollama base URL")
-            logRequest(method: "GET", path: "/", status: 502, startTime: startTime, clientIP: clientIP)
+            logRequest(
+                method: "GET", path: "/", status: 502, startTime: startTime, clientIP: clientIP)
             return
         }
 
         let task = URLSession.shared.dataTask(with: ollamaURL) { [weak self] _, response, _ in
             let ollamaOK = (response as? HTTPURLResponse)?.statusCode == 200
             let json = "{\"status\":\"ok\",\"ollama\":\(ollamaOK)}"
-            self?.sendHTTPResponse(connection, status: 200, contentType: "application/json", body: json)
-            self?.logRequest(method: "GET", path: "/", status: 200, startTime: startTime, clientIP: clientIP)
+            self?.sendHTTPResponse(
+                connection, status: 200, contentType: "application/json", body: json)
+            self?.logRequest(
+                method: "GET", path: "/", status: 200, startTime: startTime, clientIP: clientIP)
         }
         task.resume()
     }
 
     // MARK: - Proxy to Ollama
 
-    private func forwardToOllama(_ connection: NWConnection, request: HTTPRequest, startTime: Date, clientIP: String) {
+    private func forwardToOllama(
+        _ connection: NWConnection, request: HTTPRequest, startTime: Date, clientIP: String
+    ) {
         guard let ollamaURL = URL(string: "\(config.ollamaBaseURL)\(request.path)") else {
             sendError(connection, status: 502, message: "Bad gateway URL")
-            logRequest(method: request.method, path: request.path, status: 502, startTime: startTime, clientIP: clientIP)
+            logRequest(
+                method: request.method, path: request.path, status: 502, startTime: startTime,
+                clientIP: clientIP)
             return
         }
 
@@ -242,7 +260,10 @@ final class ProxyServer {
         urlRequest.timeoutInterval = 300
 
         // Forward headers (skip hop-by-hop)
-        let skipHeaders: Set<String> = ["host", "authorization", "connection", "keep-alive", "transfer-encoding", "content-length"]
+        let skipHeaders: Set<String> = [
+            "host", "authorization", "connection", "keep-alive", "transfer-encoding",
+            "content-length",
+        ]
         for (key, value) in request.headers where !skipHeaders.contains(key) {
             urlRequest.setValue(value, forHTTPHeaderField: key)
         }
@@ -266,7 +287,8 @@ final class ProxyServer {
 
     // MARK: - HTTP Response Helpers
 
-    private func handleCORSPreflight(_ connection: NWConnection, startTime: Date, clientIP: String) {
+    private func handleCORSPreflight(_ connection: NWConnection, startTime: Date, clientIP: String)
+    {
         var response = "HTTP/1.1 204 No Content\r\n"
         response += "Access-Control-Allow-Origin: *\r\n"
         response += "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH\r\n"
@@ -275,13 +297,18 @@ final class ProxyServer {
         response += "Connection: close\r\n"
         response += "\r\n"
         let data = response.data(using: .utf8) ?? Data()
-        connection.send(content: data, contentContext: .finalMessage, isComplete: true, completion: .contentProcessed({ _ in
-            connection.cancel()
-        }))
-        logRequest(method: "OPTIONS", path: "/", status: 204, startTime: startTime, clientIP: clientIP)
+        connection.send(
+            content: data, contentContext: .finalMessage, isComplete: true,
+            completion: .contentProcessed({ _ in
+                connection.cancel()
+            }))
+        logRequest(
+            method: "OPTIONS", path: "/", status: 204, startTime: startTime, clientIP: clientIP)
     }
 
-    private func sendHTTPResponse(_ connection: NWConnection, status: Int, contentType: String, body: String) {
+    private func sendHTTPResponse(
+        _ connection: NWConnection, status: Int, contentType: String, body: String
+    ) {
         let statusText = HTTPURLResponse.localizedString(forStatusCode: status)
         let bodyData = body.data(using: .utf8) ?? Data()
         var response = "HTTP/1.1 \(status) \(statusText)\r\n"
@@ -294,13 +321,16 @@ final class ProxyServer {
         var data = response.data(using: .utf8) ?? Data()
         data.append(bodyData)
 
-        connection.send(content: data, contentContext: .finalMessage, isComplete: true, completion: .contentProcessed({ _ in
-            connection.cancel()
-        }))
+        connection.send(
+            content: data, contentContext: .finalMessage, isComplete: true,
+            completion: .contentProcessed({ _ in
+                connection.cancel()
+            }))
     }
 
     private func sendError(_ connection: NWConnection, status: Int, message: String) {
-        let escaped = message
+        let escaped =
+            message
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
         let json = "{\"error\":\"\(escaped)\"}"
@@ -314,7 +344,9 @@ final class ProxyServer {
         return "unknown"
     }
 
-    private func logRequest(method: String, path: String, status: Int, startTime: Date, clientIP: String) {
+    private func logRequest(
+        method: String, path: String, status: Int, startTime: Date, clientIP: String
+    ) {
         let latency = Date().timeIntervalSince(startTime) * 1000
         let entry = RequestLogEntry(
             timestamp: Date(),
@@ -340,7 +372,10 @@ private final class StreamingDelegate: NSObject, URLSessionDataDelegate {
     var headersSent = false
     var responseStatus = 200
 
-    init(connection: NWConnection, method: String, path: String, startTime: Date, clientIP: String, onLog: @escaping (RequestLogEntry) -> Void) {
+    init(
+        connection: NWConnection, method: String, path: String, startTime: Date, clientIP: String,
+        onLog: @escaping (RequestLogEntry) -> Void
+    ) {
         self.connection = connection
         self.method = method
         self.path = path
@@ -349,7 +384,10 @@ private final class StreamingDelegate: NSObject, URLSessionDataDelegate {
         self.onLog = onLog
     }
 
-    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+    func urlSession(
+        _ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
+        completionHandler: @escaping (URLSession.ResponseDisposition) -> Void
+    ) {
         guard let httpResponse = response as? HTTPURLResponse else {
             completionHandler(.cancel)
             return
@@ -359,7 +397,9 @@ private final class StreamingDelegate: NSObject, URLSessionDataDelegate {
         let statusText = HTTPURLResponse.localizedString(forStatusCode: responseStatus)
         var headerStr = "HTTP/1.1 \(responseStatus) \(statusText)\r\n"
 
-        let skipHeaders: Set<String> = ["content-length", "transfer-encoding", "connection", "keep-alive"]
+        let skipHeaders: Set<String> = [
+            "content-length", "transfer-encoding", "connection", "keep-alive",
+        ]
         for (key, value) in httpResponse.allHeaderFields {
             let k = "\(key)".lowercased()
             if !skipHeaders.contains(k) {
@@ -381,7 +421,8 @@ private final class StreamingDelegate: NSObject, URLSessionDataDelegate {
         connection.send(content: data, completion: .contentProcessed({ _ in }))
     }
 
-    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?)
+    {
         if let error = error {
             if !headersSent {
                 let desc = error.localizedDescription
@@ -396,19 +437,25 @@ private final class StreamingDelegate: NSObject, URLSessionDataDelegate {
                 response += "\r\n"
                 var data = response.data(using: .utf8) ?? Data()
                 data.append(errData)
-                connection.send(content: data, contentContext: .finalMessage, isComplete: true, completion: .contentProcessed({ [weak self] _ in
-                    self?.connection.cancel()
-                }))
+                connection.send(
+                    content: data, contentContext: .finalMessage, isComplete: true,
+                    completion: .contentProcessed({ [weak self] _ in
+                        self?.connection.cancel()
+                    }))
                 responseStatus = 502
             } else {
-                connection.send(content: nil, contentContext: .finalMessage, isComplete: true, completion: .contentProcessed({ [weak self] _ in
-                    self?.connection.cancel()
-                }))
+                connection.send(
+                    content: nil, contentContext: .finalMessage, isComplete: true,
+                    completion: .contentProcessed({ [weak self] _ in
+                        self?.connection.cancel()
+                    }))
             }
         } else {
-            connection.send(content: nil, contentContext: .finalMessage, isComplete: true, completion: .contentProcessed({ [weak self] _ in
-                self?.connection.cancel()
-            }))
+            connection.send(
+                content: nil, contentContext: .finalMessage, isComplete: true,
+                completion: .contentProcessed({ [weak self] _ in
+                    self?.connection.cancel()
+                }))
         }
 
         let latency = Date().timeIntervalSince(startTime) * 1000

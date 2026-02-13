@@ -153,10 +153,13 @@ final class AppState: ObservableObject {
 
     init() {
         // Load persisted config
-        let ollamaURL = UserDefaults.standard.string(forKey: "ollamaBaseURL") ?? "http://localhost:11434"
+        let ollamaURL =
+            UserDefaults.standard.string(forKey: "ollamaBaseURL") ?? "http://localhost:11434"
         let port = UInt16(UserDefaults.standard.integer(forKey: "serverPort"))
         let keysStr = UserDefaults.standard.string(forKey: "apiKeys") ?? ""
-        let keys = keysStr.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        let keys = keysStr.components(separatedBy: ",").map {
+            $0.trimmingCharacters(in: .whitespaces)
+        }.filter { !$0.isEmpty }
 
         self.config = ServerConfig(
             ollamaBaseURL: ollamaURL,
@@ -164,8 +167,10 @@ final class AppState: ObservableObject {
             apiKeys: keys
         )
 
-        self.themeMode = ThemeMode(rawValue: UserDefaults.standard.string(forKey: "themeMode") ?? "") ?? .dark
-        self.language = AppLanguage(rawValue: UserDefaults.standard.string(forKey: "language") ?? "") ?? .zh
+        self.themeMode =
+            ThemeMode(rawValue: UserDefaults.standard.string(forKey: "themeMode") ?? "") ?? .dark
+        self.language =
+            AppLanguage(rawValue: UserDefaults.standard.string(forKey: "language") ?? "") ?? .zh
         self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
     }
 

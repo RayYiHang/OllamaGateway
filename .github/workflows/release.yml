@@ -1,104 +1,104 @@
 name: Build & Release
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+    push:
+        tags:
+            - "v*.*.*"
 
 permissions:
-  contents: write
+    contents: write
 
 env:
-  APP_NAME: OllamaGateway
+    APP_NAME: OllamaGateway
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - runner: macos-14          # Apple Silicon
-            arch: arm64
-          - runner: macos-13          # Intel
-            arch: x86_64
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
+    build:
+        strategy:
+            matrix:
+                include:
+                    - runner: macos-14 # Apple Silicon
+                      arch: arm64
+                    - runner: macos-13 # Intel
+                      arch: x86_64
+        runs-on: ${{ matrix.runner }}
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
+            - name: Setup Xcode
+              uses: maxim-lobanov/setup-xcode@v1
+              with:
+                  xcode-version: latest-stable
 
-      - name: Extract version
-        id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            - name: Extract version
+              id: version
+              run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Generate icons
-        run: |
-          chmod +x scripts/generate-icons.sh
-          bash scripts/generate-icons.sh
+            - name: Generate icons
+              run: |
+                  chmod +x scripts/generate-icons.sh
+                  bash scripts/generate-icons.sh
 
-      - name: Build app
-        env:
-          APP_VERSION: ${{ steps.version.outputs.version }}
-          BUILD_NUMBER: ${{ github.run_number }}
-          ARCH: ${{ matrix.arch }}
-        run: |
-          chmod +x scripts/build.sh
-          bash scripts/build.sh release
+            - name: Build app
+              env:
+                  APP_VERSION: ${{ steps.version.outputs.version }}
+                  BUILD_NUMBER: ${{ github.run_number }}
+                  ARCH: ${{ matrix.arch }}
+              run: |
+                  chmod +x scripts/build.sh
+                  bash scripts/build.sh release
 
-      - name: Create DMG
-        env:
-          APP_VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          chmod +x scripts/create-dmg.sh
-          bash scripts/create-dmg.sh
+            - name: Create DMG
+              env:
+                  APP_VERSION: ${{ steps.version.outputs.version }}
+              run: |
+                  chmod +x scripts/create-dmg.sh
+                  bash scripts/create-dmg.sh
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dmg-${{ matrix.arch }}
-          path: build/*.dmg
+            - name: Upload artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: dmg-${{ matrix.arch }}
+                  path: build/*.dmg
 
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    release:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
+            - name: Download all artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: artifacts
 
-      - name: Extract version
-        id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            - name: Extract version
+              id: version
+              run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "Ollama Gateway v${{ steps.version.outputs.version }}"
-          body: |
-            ## Ollama Gateway v${{ steps.version.outputs.version }}
+            - name: Create Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  name: "Ollama Gateway v${{ steps.version.outputs.version }}"
+                  body: |
+                      ## Ollama Gateway v${{ steps.version.outputs.version }}
 
-            ### 📥 下载 / Download
+                      ### 📥 下载 / Download
 
-            | 架构 / Architecture | 文件 / File |
-            |---|---|
-            | Apple Silicon (M1/M2/M3/M4) | `OllamaGateway-v${{ steps.version.outputs.version }}-arm64.dmg` |
-            | Intel (x86_64) | `OllamaGateway-v${{ steps.version.outputs.version }}-x86_64.dmg` |
+                      | 架构 / Architecture | 文件 / File |
+                      |---|---|
+                      | Apple Silicon (M1/M2/M3/M4) | `OllamaGateway-v${{ steps.version.outputs.version }}-arm64.dmg` |
+                      | Intel (x86_64) | `OllamaGateway-v${{ steps.version.outputs.version }}-x86_64.dmg` |
 
-            ### 安装 / Installation
-            1. 下载对应架构的 `.dmg` 文件
-            2. 打开 DMG，将 **Ollama Gateway** 拖入 **Applications** 文件夹
-            3. 首次打开：右键点击应用 → "打开"
+                      ### 安装 / Installation
+                      1. 下载对应架构的 `.dmg` 文件
+                      2. 打开 DMG，将 **Ollama Gateway** 拖入 **Applications** 文件夹
+                      3. 首次打开：右键点击应用 → "打开"
 
-            ---
+                      ---
 
-            1. Download the `.dmg` for your architecture
-            2. Open DMG, drag **Ollama Gateway** to **Applications**
-            3. First launch: Right-click → "Open"
-          draft: false
-          prerelease: false
-          files: artifacts/**/*.dmg
+                      1. Download the `.dmg` for your architecture
+                      2. Open DMG, drag **Ollama Gateway** to **Applications**
+                      3. First launch: Right-click → "Open"
+                  draft: false
+                  prerelease: false
+                  files: artifacts/**/*.dmg

@@ -193,7 +193,8 @@ struct SettingsView: View {
                             }) {
                                 Text(copiedKeyId == key ? L10n.copied : L10n.copyKey)
                                     .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(copiedKeyId == key ? theme.success : theme.secondaryText)
+                                    .foregroundColor(
+                                        copiedKeyId == key ? theme.success : theme.secondaryText)
                             }
                             .buttonStyle(.plain)
 

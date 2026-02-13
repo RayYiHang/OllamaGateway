@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 // MARK: - App Entry
 
@@ -63,7 +63,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         false
     }
 
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool)
+        -> Bool
+    {
         if !flag {
             // Reopen main window when clicking Dock icon
             for window in NSApp.windows {
@@ -90,13 +92,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = statusItem?.button {
             // Try to load custom status bar icon
             if let iconPath = Bundle.main.path(forResource: "StatusBarIcon", ofType: "png"),
-               let image = NSImage(contentsOfFile: iconPath) {
+                let image = NSImage(contentsOfFile: iconPath)
+            {
                 image.size = NSSize(width: 18, height: 18)
                 image.isTemplate = true
                 button.image = image
             } else {
                 // Fallback to SF Symbol
-                button.image = NSImage(systemSymbolName: "server.rack", accessibilityDescription: "Ollama Gateway")
+                button.image = NSImage(
+                    systemSymbolName: "server.rack", accessibilityDescription: "Ollama Gateway")
                 button.image?.size = NSSize(width: 18, height: 18)
                 button.image?.isTemplate = true
             }
@@ -105,7 +109,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateStatusMenu()
 
         menuUpdateTimer?.invalidate()
-        menuUpdateTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+        menuUpdateTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) {
+            [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.updateStatusMenu()
             }
@@ -116,16 +121,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
 
         // Status indicator
-        let statusTitle = appState?.serverStatus.isRunning == true ? L10n.serverRunning : L10n.serverStopped
+        let statusTitle =
+            appState?.serverStatus.isRunning == true ? L10n.serverRunning : L10n.serverStopped
         let statusIcon = appState?.serverStatus.isRunning == true ? "🟢" : "🔴"
-        let statusItem = NSMenuItem(title: "\(statusIcon) \(statusTitle)", action: nil, keyEquivalent: "")
+        let statusItem = NSMenuItem(
+            title: "\(statusIcon) \(statusTitle)", action: nil, keyEquivalent: "")
         statusItem.isEnabled = false
         menu.addItem(statusItem)
 
         // Ollama status
         let ollamaIcon = appState?.ollamaStatus == .online ? "🟢" : "🔴"
         let ollamaLabel = appState?.ollamaStatus == .online ? L10n.online : L10n.offline
-        let ollamaItem = NSMenuItem(title: "Ollama: \(ollamaIcon) \(ollamaLabel)", action: nil, keyEquivalent: "")
+        let ollamaItem = NSMenuItem(
+            title: "Ollama: \(ollamaIcon) \(ollamaLabel)", action: nil, keyEquivalent: "")
         ollamaItem.isEnabled = false
         menu.addItem(ollamaItem)
 
@@ -133,11 +141,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Start / Stop
         if appState?.serverStatus.isRunning == true {
-            let stopItem = NSMenuItem(title: L10n.stopServer, action: #selector(stopServer), keyEquivalent: "s")
+            let stopItem = NSMenuItem(
+                title: L10n.stopServer, action: #selector(stopServer), keyEquivalent: "s")
             stopItem.target = self
             menu.addItem(stopItem)
         } else {
-            let startItem = NSMenuItem(title: L10n.startServer, action: #selector(startServer), keyEquivalent: "s")
+            let startItem = NSMenuItem(
+                title: L10n.startServer, action: #selector(startServer), keyEquivalent: "s")
             startItem.target = self
             menu.addItem(startItem)
         }
@@ -145,7 +155,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem.separator())
 
         // Show Window
-        let showItem = NSMenuItem(title: L10n.showWindow, action: #selector(showMainWindow), keyEquivalent: "o")
+        let showItem = NSMenuItem(
+            title: L10n.showWindow, action: #selector(showMainWindow), keyEquivalent: "o")
         showItem.target = self
         menu.addItem(showItem)
 

@@ -74,7 +74,8 @@ struct MainView: View {
                     StatCard(
                         title: L10n.ollamaStatus,
                         value: appState.ollamaStatus == .online ? L10n.online : L10n.offline,
-                        icon: appState.ollamaStatus == .online ? "checkmark.circle.fill" : "xmark.circle.fill",
+                        icon: appState.ollamaStatus == .online
+                            ? "checkmark.circle.fill" : "xmark.circle.fill",
                         iconColor: appState.ollamaStatus == .online ? theme.success : theme.error
                     ) {
                         HealthBadge(status: appState.ollamaStatus)
@@ -139,12 +140,16 @@ struct MainView: View {
 
                 // Theme Toggle
                 Button(action: { toggleTheme() }) {
-                    Image(systemName: appState.themeMode == .dark ? "moon.fill" :
-                            (appState.themeMode == .light ? "sun.max.fill" : "circle.lefthalf.filled"))
-                        .font(.system(size: 13))
-                        .foregroundColor(theme.secondaryText)
-                        .frame(width: 30, height: 30)
-                        .contentShape(Rectangle())
+                    Image(
+                        systemName: appState.themeMode == .dark
+                            ? "moon.fill"
+                            : (appState.themeMode == .light
+                                ? "sun.max.fill" : "circle.lefthalf.filled")
+                    )
+                    .font(.system(size: 13))
+                    .foregroundColor(theme.secondaryText)
+                    .frame(width: 30, height: 30)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
@@ -206,8 +211,10 @@ struct MainView: View {
             HStack(spacing: 10) {
                 Button(action: { toggleServer() }) {
                     HStack(spacing: 6) {
-                        Image(systemName: appState.serverStatus.isRunning ? "stop.fill" : "play.fill")
-                            .font(.system(size: 11))
+                        Image(
+                            systemName: appState.serverStatus.isRunning ? "stop.fill" : "play.fill"
+                        )
+                        .font(.system(size: 11))
                         Text(appState.serverStatus.isRunning ? L10n.stop : L10n.start)
                             .font(.system(size: 12, weight: .semibold))
                     }

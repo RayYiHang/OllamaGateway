@@ -42,10 +42,10 @@
 
 前往 [Releases](https://github.com/OWNER/ollamafastapi/releases/latest) 下载对应架构的 `.dmg`：
 
-| 芯片 | 文件 |
-|------|------|
-| Apple Silicon (M1/M2/M3/M4) | `OllamaGateway-vX.X.X-arm64.dmg` |
-| Intel | `OllamaGateway-vX.X.X-x86_64.dmg` |
+| 芯片                        | 文件                              |
+| --------------------------- | --------------------------------- |
+| Apple Silicon (M1/M2/M3/M4) | `OllamaGateway-vX.X.X-arm64.dmg`  |
+| Intel                       | `OllamaGateway-vX.X.X-x86_64.dmg` |
 
 打开 DMG → 拖入 Applications → 首次启动右键"打开"。
 
@@ -148,11 +148,11 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ## ⚙️ 配置
 
-| 项目 | 默认值 | 说明 |
-|------|--------|------|
-| Ollama Base URL | `http://localhost:11434` | Ollama 服务地址 |
-| Server Port | `8000` | 网关监听端口 |
-| API Keys | — | 鉴权密钥（支持多个） |
+| 项目            | 默认值                   | 说明                 |
+| --------------- | ------------------------ | -------------------- |
+| Ollama Base URL | `http://localhost:11434` | Ollama 服务地址      |
+| Server Port     | `8000`                   | 网关监听端口         |
+| API Keys        | —                        | 鉴权密钥（支持多个） |
 
 所有配置通过应用 GUI 管理，持久化在 UserDefaults 中。
 
@@ -180,9 +180,9 @@ git tag v1.0.1 && git push origin v1.0.1
 
 ## 📋 API 行为
 
-| 端点 | 鉴权 | 说明 |
-|------|------|------|
-| `GET /` | ✗ | 健康检查 |
+| 端点      | 鉴权           | 说明              |
+| --------- | -------------- | ----------------- |
+| `GET /`   | ✗              | 健康检查          |
 | `/{path}` | ✓ Bearer Token | 透明代理到 Ollama |
 
 兼容所有 OpenAI 格式客户端（Cursor、Continue、Open WebUI 等）。

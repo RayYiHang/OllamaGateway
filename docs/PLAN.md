@@ -28,6 +28,7 @@ Client (公网/本地)
 ```
 
 **双部署模式**：
+
 - 🖥️ **macOS 原生应用** — 零依赖 GUI，适合桌面用户
 - 🐳 **Docker 部署** — Python FastAPI，适合服务器部署
 
@@ -35,17 +36,17 @@ Client (公网/本地)
 
 ### 2.1 核心决策
 
-| 决策 | 方案 | 理由 |
-|------|------|------|
-| GUI 框架 | SwiftUI | macOS 原生、现代声明式 UI |
-| HTTP 服务器 | `NWListener` (Network.framework) | 零外部依赖、系统框架 |
-| HTTP 客户端 | `URLSession` | 原生流式传输 |
-| 自动更新 | GitHub API + 内置更新器 | 无第三方框架 |
-| 开机自启 | `SMAppService` (macOS 13+) | 官方 API |
-| 持久化 | `@AppStorage` / `UserDefaults` | 轻量级 |
-| 本地化 | 代码内枚举 | 无资源文件依赖 |
-| 构建工具 | Swift Package Manager | 无需 .xcodeproj |
-| 外部依赖 | **零** | 最小二进制体积 |
+| 决策        | 方案                             | 理由                      |
+| ----------- | -------------------------------- | ------------------------- |
+| GUI 框架    | SwiftUI                          | macOS 原生、现代声明式 UI |
+| HTTP 服务器 | `NWListener` (Network.framework) | 零外部依赖、系统框架      |
+| HTTP 客户端 | `URLSession`                     | 原生流式传输              |
+| 自动更新    | GitHub API + 内置更新器          | 无第三方框架              |
+| 开机自启    | `SMAppService` (macOS 13+)       | 官方 API                  |
+| 持久化      | `@AppStorage` / `UserDefaults`   | 轻量级                    |
+| 本地化      | 代码内枚举                       | 无资源文件依赖            |
+| 构建工具    | Swift Package Manager            | 无需 .xcodeproj           |
+| 外部依赖    | **零**                           | 最小二进制体积            |
 
 ### 2.2 数据流
 
@@ -57,26 +58,27 @@ Client → NWListener (TCP) → HTTP Parser → API Key 验证
 
 ## 3. 功能矩阵
 
-| 功能 | 描述 | 状态 |
-|------|------|------|
-| HTTP 反向代理 | Bearer Token 鉴权 + 透明代理 | ✅ |
-| 启停控制 | GUI + 状态栏一键控制 | ✅ |
-| Ollama 健康检测 | 实时连接状态监控 | ✅ |
-| API Key 管理 | 增删查看 | ✅ |
-| 请求 Dashboard | 统计、延迟、成功率、活动图 | ✅ |
-| 请求日志 | 实时日志列表 | ✅ |
-| 状态栏菜单 | 快捷控制 + 状态指示 | ✅ |
-| Dock 图标 | 自定义图标 | ✅ |
-| 明暗主题 | 日间/夜间/跟随系统 | ✅ |
-| 中英文切换 | 默认中文 | ✅ |
-| 开机自启 | SMAppService | ✅ |
-| 自动更新 | GitHub Release 检测 | ✅ |
-| DMG 打包 | 一键构建分发包 | ✅ |
-| GitHub Actions | 自动构建 x86+ARM Universal Binary | ✅ |
+| 功能            | 描述                              | 状态 |
+| --------------- | --------------------------------- | ---- |
+| HTTP 反向代理   | Bearer Token 鉴权 + 透明代理      | ✅   |
+| 启停控制        | GUI + 状态栏一键控制              | ✅   |
+| Ollama 健康检测 | 实时连接状态监控                  | ✅   |
+| API Key 管理    | 增删查看                          | ✅   |
+| 请求 Dashboard  | 统计、延迟、成功率、活动图        | ✅   |
+| 请求日志        | 实时日志列表                      | ✅   |
+| 状态栏菜单      | 快捷控制 + 状态指示               | ✅   |
+| Dock 图标       | 自定义图标                        | ✅   |
+| 明暗主题        | 日间/夜间/跟随系统                | ✅   |
+| 中英文切换      | 默认中文                          | ✅   |
+| 开机自启        | SMAppService                      | ✅   |
+| 自动更新        | GitHub Release 检测               | ✅   |
+| DMG 打包        | 一键构建分发包                    | ✅   |
+| GitHub Actions  | 自动构建 x86+ARM Universal Binary | ✅   |
 
 ## 4. UI 设计规范
 
 ### 设计风格
+
 - 灵感来源：Withings Health Dashboard
 - 暗色主题为主 (#0D1117)，青绿强调色 (#00D4AA)
 - 圆角卡片布局，左侧边栏 + 右侧内容区
@@ -84,8 +86,8 @@ Client → NWListener (TCP) → HTTP Parser → API Key 验证
 
 ### 色彩体系
 
-| 元素 | 暗色 | 亮色 |
-|------|------|------|
+| 元素 | 暗色      | 亮色      |
+| ---- | --------- | --------- |
 | 背景 | `#0D1117` | `#F6F8FA` |
 | 卡片 | `#161B22` | `#FFFFFF` |
 | 边框 | `#30363D` | `#D0D7DE` |

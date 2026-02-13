@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ollamafastapi}",
+            "name": "Debug OllamaGateway",
+            "target": "OllamaGateway",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug OllamaGateway"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ollamafastapi}",
+            "name": "Release OllamaGateway",
+            "target": "OllamaGateway",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release OllamaGateway"
+        }
+    ]
+}

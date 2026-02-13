@@ -10,8 +10,11 @@ struct DashboardView: View {
         var score = 50
         if appState.ollamaStatus == .online { score += 25 }
         if appState.serverStatus.isRunning { score += 15 }
-        if appState.stats.successRate > 95 { score += 10 }
-        else if appState.stats.successRate > 80 { score += 5 }
+        if appState.stats.successRate > 95 {
+            score += 10
+        } else if appState.stats.successRate > 80 {
+            score += 5
+        }
         return min(score, 100)
     }
 
@@ -50,7 +53,8 @@ struct DashboardView: View {
                 HStack(spacing: 8) {
                     Text(appState.serverStatus.isRunning ? L10n.running : L10n.stopped)
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(appState.serverStatus.isRunning ? theme.accent : theme.secondaryText)
+                        .foregroundColor(
+                            appState.serverStatus.isRunning ? theme.accent : theme.secondaryText)
                 }
 
                 Text("\(L10n.details):")
@@ -67,10 +71,12 @@ struct DashboardView: View {
     // MARK: - Detail Cards Grid
 
     private var detailCardsGrid: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: 12),
-            GridItem(.flexible(), spacing: 12)
-        ], spacing: 12) {
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12),
+            ], spacing: 12
+        ) {
             DetailCard(
                 title: L10n.duration,
                 value: uptimeLabel,
@@ -115,18 +121,21 @@ struct DashboardView: View {
             GeometryReader { geo in
                 let data = appState.stats.requestsPerMinute
                 let maxVal = max(data.max() ?? 1, 1)
-                let barWidth = max((geo.size.width - CGFloat(data.count) * 1.5) / CGFloat(data.count), 2)
+                let barWidth = max(
+                    (geo.size.width - CGFloat(data.count) * 1.5) / CGFloat(data.count), 2)
 
                 HStack(alignment: .bottom, spacing: 1.5) {
                     ForEach(data.indices, id: \.self) { i in
-                        let h = data[i] > 0 ? max(CGFloat(data[i]) / CGFloat(maxVal) * geo.size.height, 3) : 1
+                        let h =
+                            data[i] > 0
+                            ? max(CGFloat(data[i]) / CGFloat(maxVal) * geo.size.height, 3) : 1
                         let isCurrentMinute = i == Calendar.current.component(.minute, from: Date())
 
                         RoundedRectangle(cornerRadius: 2)
                             .fill(
-                                data[i] > 0 ?
-                                    (isCurrentMinute ? theme.accent : Color(r: 0, g: 150, b: 220)) :
-                                    theme.cardBorder.opacity(0.15)
+                                data[i] > 0
+                                    ? (isCurrentMinute ? theme.accent : Color(r: 0, g: 150, b: 220))
+                                    : theme.cardBorder.opacity(0.15)
                             )
                             .frame(width: barWidth, height: h)
                     }
@@ -160,9 +169,11 @@ struct DashboardView: View {
 
     private var requestLogSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionHeader(L10n.recentRequests, action: {
-                appState.clearLogs()
-            }, actionLabel: L10n.clearLogs)
+            SectionHeader(
+                L10n.recentRequests,
+                action: {
+                    appState.clearLogs()
+                }, actionLabel: L10n.clearLogs)
 
             if appState.requestLogs.isEmpty {
                 HStack {

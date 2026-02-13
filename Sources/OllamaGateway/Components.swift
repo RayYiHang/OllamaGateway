@@ -172,11 +172,14 @@ struct MiniBarChart: View {
     var body: some View {
         GeometryReader { geo in
             let maxVal = max(data.max() ?? 1, 1)
-            let barWidth = max((geo.size.width - CGFloat(data.count - 1) * 2) / CGFloat(data.count), 2)
+            let barWidth = max(
+                (geo.size.width - CGFloat(data.count - 1) * 2) / CGFloat(data.count), 2)
 
             HStack(alignment: .bottom, spacing: 2) {
                 ForEach(data.indices, id: \.self) { i in
-                    let h = data[i] > 0 ? max(CGFloat(data[i]) / CGFloat(maxVal) * geo.size.height, 2) : 2
+                    let h =
+                        data[i] > 0
+                        ? max(CGFloat(data[i]) / CGFloat(maxVal) * geo.size.height, 2) : 2
                     RoundedRectangle(cornerRadius: 1.5)
                         .fill(data[i] > 0 ? barColor : theme.cardBorder.opacity(0.3))
                         .frame(width: barWidth, height: h)
