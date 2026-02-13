@@ -254,10 +254,13 @@ struct ScoreCircle: View {
                 .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                 .frame(width: size, height: size)
                 .rotationEffect(.degrees(-90))
+                .animation(.easeOut(duration: 0.8), value: score)
 
             Text("\(score)")
                 .font(.system(size: size * 0.35, weight: .bold, design: .rounded))
                 .foregroundColor(color)
+                .contentTransition(.numericText())
+                .animation(.spring(response: 0.4), value: score)
         }
     }
 }
@@ -272,6 +275,7 @@ struct DetailCard: View {
     let statusDot: Color?
 
     @Environment(\.theme) var theme
+    @State private var isHovered = false
 
     var body: some View {
         HStack {
@@ -288,11 +292,14 @@ struct DetailCard: View {
                 Text(value)
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundColor(theme.primaryText)
+                    .contentTransition(.numericText())
+                    .animation(.spring(response: 0.4), value: value)
 
                 if let dot = statusDot {
                     Circle()
                         .fill(dot)
                         .frame(width: 6, height: 6)
+                        .shadow(color: dot.opacity(0.6), radius: 3)
                 }
             }
 
@@ -316,9 +323,12 @@ struct DetailCard: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(theme.cardBorder.opacity(0.3), lineWidth: 0.5)
+                        .stroke(theme.cardBorder.opacity(isHovered ? 0.6 : 0.3), lineWidth: 0.5)
                 )
         )
+        .scaleEffect(isHovered ? 1.02 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: isHovered)
+        .onHover { isHovered = $0 }
     }
 }
 

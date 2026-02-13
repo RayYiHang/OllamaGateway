@@ -188,3 +188,52 @@ enum TunnelStatus {
 - 不替代 Docker 部署（Python 版本保留）
 - 不做 Windows/Linux 版本
 - 不做用户权限管理系统
+
+## 10. v1.2 功能增强
+
+### 10.1 GitHub Actions CI 修复
+- tag 格式从 `v*.*.*` 改为同时支持 `*.*.*`（无 v 前缀）
+- Release body 增加完整 changelog、签名修复说明、sha256 校验
+
+### 10.2 内嵌 cloudflared 零依赖
+- 应用启动时自动检测/下载 cloudflared 二进制到 `~/Library/Application Support/OllamaGateway/`
+- 无需用户手动安装 brew，真正零依赖
+- 从 GitHub Releases 下载对应架构 (arm64/amd64) 的 cloudflared
+
+### 10.3 DMG 签名提示
+- README 中添加 `xattr -cr` 命令，解决 macOS 安全提示
+
+### 10.4 README 中英文分离
+- `README.md` 为中文主文档
+- `README_EN.md` 为英文文档
+- 顶部互相链接
+
+### 10.5 UI 全局统一
+- 按钮颜色统一使用 `theme.accent` 替代硬编码 amber/orange
+- 标题栏无缝融合 `.titlebar` transparent
+- 应用标题栏与内容区颜色一致
+
+### 10.6 通用设置增强
+- 自动启动 Cloudflare Tunnel 开关
+- 隐藏 Dock 图标开关（LSUIElement 动态切换）
+- 关闭窗口时保持后台运行，状态栏图标常驻
+
+### 10.7 磨玻璃 + 动效增强
+- 侧边栏状态指示灯呼吸动画
+- 按钮 hover 效果
+- 数字变化动画 `.contentTransition(.numericText())`
+- 卡片进场动画
+
+### 10.8 自动更新完善
+- 检测到新版本后显示下载进度
+- 自动下载 DMG 到临时目录并打开
+- 显示当前版本 vs 远程版本对比
+
+### 10.9 日志系统增强
+- 错误状态码旁显示感叹号，点击弹窗解释（401=Key错误 等）
+- 日志保存/导出功能，用户选择路径导出标准日志文件
+- 日志区域固定高度+滚动条，限制显示前 100 条
+
+### 10.10 状态栏菜单修复
+- 点击状态栏图标弹出窗口
+- "服务运行中" → "Ollama Gateway: 运行中"

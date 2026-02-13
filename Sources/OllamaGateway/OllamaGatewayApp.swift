@@ -15,6 +15,15 @@ struct OllamaGatewayApp: App {
                 .preferredColorScheme(appState.themeMode.colorScheme())
                 .onAppear {
                     setupAppOnce()
+                    // Make title bar transparent
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        for window in NSApp.windows {
+                            window.titlebarAppearsTransparent = true
+                            window.titleVisibility = .hidden
+                            window.isMovableByWindowBackground = true
+                            window.backgroundColor = .clear
+                        }
+                    }
                 }
         }
         .defaultSize(width: 900, height: 600)
@@ -41,6 +50,13 @@ struct OllamaGatewayApp: App {
         let updateChecker = UpdateChecker(appState: appState)
         updateChecker.start()
         appState.updateChecker = updateChecker
+
+        // Auto-start Cloudflare Tunnel if enabled
+        if appState.autoStartTunnel {
+            let tunnel = CloudflareTunnel(appState: appState)
+            appState.tunnel = tunnel
+            tunnel.start()
+        }
     }
 }
 
@@ -54,8 +70,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuUpdateTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // App is an accessory (shows in Dock + MenuBar)
-        NSApp.setActivationPolicy(.regular)
+        let hide = UserDefaults.standard.bool(forKey: "hideDockIcon")
+        NSApp.setActivationPolicy(hide ? .accessory : .regular)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -105,6 +121,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 button.image?.size = NSSize(width: 18, height: 18)
                 button.image?.isTemplate = true
             }
+            button.action = #selector(statusBarClicked)
+            button.target = self
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
         updateStatusMenu()
@@ -122,11 +141,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
 
         // Status indicator
-        let statusTitle =
-            appState?.serverStatus.isRunning == true ? L10n.serverRunning : L10n.serverStopped
+        let gwLabel = appState?.serverStatus.isRunning == true
+            ? "Ollama Gateway: \(L10n.running)" : "Ollama Gateway: \(L10n.stopped)"
         let statusIcon = appState?.serverStatus.isRunning == true ? "🟢" : "🔴"
         let statusItem = NSMenuItem(
-            title: "\(statusIcon) \(statusTitle)", action: nil, keyEquivalent: "")
+            title: "\(statusIcon) \(gwLabel)", action: nil, keyEquivalent: "")
         statusItem.isEnabled = false
         menu.addItem(statusItem)
 
@@ -168,7 +187,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         quitItem.target = self
         menu.addItem(quitItem)
 
-        self.statusItem?.menu = menu
+        statusMenu = menu
+    }
+
+    @objc private func statusBarClicked(_ sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else { return }
+        if event.type == .rightMouseUp {
+            // Right-click: show menu
+            updateStatusMenu()
+            self.statusItem?.menu = statusMenu
+            self.statusItem?.button?.performClick(nil)
+            // Reset menu to nil so action fires next time
+            DispatchQueue.main.async { [weak self] in
+                self?.statusItem?.menu = nil
+            }
+        } else {
+            // Left-click: toggle main window
+            showMainWindow()
+        }
     }
 
     @objc private func showMainWindow() {

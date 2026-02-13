@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import ServiceManagement
 
@@ -114,12 +115,52 @@ final class UpdateChecker {
             let remoteVersion =
                 release.tag_name.hasPrefix("v")
                 ? String(release.tag_name.dropFirst()) : release.tag_name
+
+            // Find matching DMG asset for current architecture
+            #if arch(arm64)
+            let archSuffix = "arm64"
+            #else
+            let archSuffix = "x86_64"
+            #endif
+            let dmgURL = release.assets?.first(where: {
+                $0.name.contains(archSuffix) && $0.name.hasSuffix(".dmg")
+            })?.browser_download_url ?? release.html_url
+
             if Self.isNewer(remote: remoteVersion, current: Self.currentVersion) {
                 Task { @MainActor [weak self] in
                     self?.appState?.updateAvailable = (
-                        version: remoteVersion, url: release.html_url
+                        version: remoteVersion, url: dmgURL
                     )
                 }
+            }
+        }.resume()
+    }
+
+    /// Download and open the DMG for auto-update
+    func downloadAndInstall(urlString: String) {
+        guard let url = URL(string: urlString) else { return }
+
+        Task { @MainActor [weak self] in
+            self?.appState?.isDownloadingUpdate = true
+        }
+
+        URLSession.shared.downloadTask(with: url) { [weak self] tempURL, response, error in
+            Task { @MainActor [weak self] in
+                self?.appState?.isDownloadingUpdate = false
+            }
+
+            guard let tempURL = tempURL, error == nil,
+                  let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                return
+            }
+
+            let dest = FileManager.default.temporaryDirectory
+                .appendingPathComponent("OllamaGateway-update.dmg")
+            try? FileManager.default.removeItem(at: dest)
+            try? FileManager.default.moveItem(at: tempURL, to: dest)
+
+            DispatchQueue.main.async {
+                NSWorkspace.shared.open(dest)
             }
         }.resume()
     }

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 // MARK: - Server Configuration
@@ -118,14 +119,21 @@ struct DashboardStats {
 
 enum TunnelStatus: Equatable {
     case stopped
+    case downloading
     case starting
     case running(url: String)
     case error(String)
-    case notInstalled
 
     var isRunning: Bool {
         if case .running = self { return true }
         return false
+    }
+
+    var isBusy: Bool {
+        switch self {
+        case .downloading, .starting: return true
+        default: return false
+        }
     }
 
     var publicURL: String? {
@@ -160,9 +168,19 @@ final class AppState: ObservableObject {
     @Published var launchAtLogin: Bool {
         didSet { UserDefaults.standard.set(launchAtLogin, forKey: "launchAtLogin") }
     }
+    @Published var autoStartTunnel: Bool {
+        didSet { UserDefaults.standard.set(autoStartTunnel, forKey: "autoStartTunnel") }
+    }
+    @Published var hideDockIcon: Bool {
+        didSet {
+            UserDefaults.standard.set(hideDockIcon, forKey: "hideDockIcon")
+            NSApp.setActivationPolicy(hideDockIcon ? .accessory : .regular)
+        }
+    }
 
     // Update
     @Published var updateAvailable: (version: String, url: String)?
+    @Published var isDownloadingUpdate = false
 
     // Tunnel
     @Published var tunnelStatus: TunnelStatus = .stopped
@@ -196,6 +214,8 @@ final class AppState: ObservableObject {
         self.language =
             AppLanguage(rawValue: UserDefaults.standard.string(forKey: "language") ?? "") ?? .zh
         self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
+        self.autoStartTunnel = UserDefaults.standard.bool(forKey: "autoStartTunnel")
+        self.hideDockIcon = UserDefaults.standard.bool(forKey: "hideDockIcon")
     }
 
     func saveConfig() {

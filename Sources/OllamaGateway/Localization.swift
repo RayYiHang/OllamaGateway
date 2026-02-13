@@ -114,14 +114,18 @@ enum L10n {
     static var tunnelTitle: String { s("Cloudflare Tunnel", "Cloudflare Tunnel") }
     static var tunnelStatus: String { s("隧道状态", "Tunnel Status") }
     static var tunnelRunning: String { s("公网已暴露", "Public Access Active") }
-    static var tunnelNotInstalled: String { s("未安装 cloudflared", "cloudflared not installed") }
-    static var tunnelInstallHint: String {
-        s(
-            "需要安装 cloudflared CLI。可通过 Homebrew 安装：brew install cloudflared",
-            "cloudflared CLI is required. Install via Homebrew: brew install cloudflared"
-        )
-    }
-    static var tunnelInstallLink: String { s("查看安装文档", "View Installation Guide") }
+    static var tunnelDownloading: String { s("正在下载 cloudflared...", "Downloading cloudflared...") }
+    static var autoStartTunnel: String { s("启动时自动开启 Tunnel", "Auto-start Tunnel on Launch") }
+    static var autoStartTunnelDesc: String { s("应用启动时自动开启 Cloudflare Tunnel", "Automatically start Cloudflare Tunnel when app launches") }
+    static var hideDockIcon: String { s("隐藏 Dock 图标", "Hide Dock Icon") }
+    static var hideDockIconDesc: String { s("关闭窗口后仅保留状态栏图标", "Only show status bar icon when window is closed") }
+    static var saveLogs: String { s("保存日志", "Save Logs") }
+    static var logErrorHint401: String { s("API Key 错误或未携带 Authorization 头", "Invalid API Key or missing Authorization header") }
+    static var logErrorHint403: String { s("请求被禁止，可能是 IP 限制或权限不足", "Request forbidden, possible IP restriction or insufficient permissions") }
+    static var logErrorHint404: String { s("请求路径不存在，请检查 API 端点", "Path not found, check API endpoint") }
+    static var logErrorHint500: String { s("Ollama 服务器内部错误，请检查模型状态", "Ollama internal server error, check model status") }
+    static var logErrorHint502: String { s("无法连接 Ollama 服务，请确认 Ollama 是否运行", "Cannot connect to Ollama service, check if Ollama is running") }
+    static var logErrorHintGeneric: String { s("请求处理异常，请检查日志详情", "Request processing error, check log details") }
     static var tunnelInfo: String {
         s(
             "使用 Cloudflare Quick Tunnel 将本地代理端口暴露到公网，无需公网 IP，自带 HTTPS。",

@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Dashboard View
 
@@ -138,6 +139,7 @@ struct DashboardView: View {
                                     : theme.cardBorder.opacity(0.15)
                             )
                             .frame(width: barWidth, height: h)
+                            .animation(.easeOut(duration: 0.3).delay(Double(i) * 0.003), value: data[i])
                     }
                 }
             }
@@ -162,11 +164,33 @@ struct DashboardView: View {
 
     private var requestLogSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionHeader(
-                L10n.recentRequests,
-                action: {
-                    appState.clearLogs()
-                }, actionLabel: L10n.clearLogs)
+            HStack {
+                Text(L10n.recentRequests)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(theme.primaryText)
+                Spacer()
+
+                // Save logs button
+                Button(action: saveLogs) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 11))
+                        Text(L10n.saveLogs)
+                            .font(.system(size: 11))
+                    }
+                    .foregroundColor(theme.accent)
+                }
+                .buttonStyle(.plain)
+                .disabled(appState.requestLogs.isEmpty)
+
+                // Clear logs button
+                Button(action: { appState.clearLogs() }) {
+                    Text(L10n.clearLogs)
+                        .font(.system(size: 11))
+                        .foregroundColor(theme.accent)
+                }
+                .buttonStyle(.plain)
+            }
 
             if appState.requestLogs.isEmpty {
                 HStack {
@@ -200,7 +224,7 @@ struct DashboardView: View {
                             .frame(minWidth: 150, alignment: .leading)
                         Spacer()
                         Text(L10n.status)
-                            .frame(width: 50, alignment: .center)
+                            .frame(width: 60, alignment: .center)
                         Text(L10n.latency)
                             .frame(width: 70, alignment: .trailing)
                         Text(L10n.time)
@@ -213,13 +237,16 @@ struct DashboardView: View {
 
                     Divider().opacity(0.3)
 
-                    // Rows
-                    ForEach(appState.requestLogs.prefix(20)) { log in
-                        requestRow(log)
-                        if log.id != appState.requestLogs.prefix(20).last?.id {
-                            Divider().opacity(0.15)
+                    // Scrollable Rows — limited to 100
+                    ScrollView(.vertical, showsIndicators: true) {
+                        LazyVStack(spacing: 0) {
+                            ForEach(appState.requestLogs.prefix(100)) { log in
+                                requestRow(log)
+                                Divider().opacity(0.15)
+                            }
                         }
                     }
+                    .frame(maxHeight: 300)
                 }
                 .glassCard()
             }
@@ -242,10 +269,20 @@ struct DashboardView: View {
 
             Spacer()
 
-            Text("\(log.statusCode)")
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                .foregroundColor(log.isSuccess ? theme.success : theme.error)
-                .frame(width: 50, alignment: .center)
+            // Status code + error hint
+            HStack(spacing: 4) {
+                Text("\(log.statusCode)")
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundColor(log.isSuccess ? theme.success : theme.error)
+
+                if !log.isSuccess, let hint = errorHintForStatus(log.statusCode) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(theme.warning)
+                        .help(hint)
+                }
+            }
+            .frame(width: 60, alignment: .center)
 
             Text(log.latencyMs.latencyString)
                 .font(.system(size: 11, design: .monospaced))
@@ -259,6 +296,41 @@ struct DashboardView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 6)
+    }
+
+    // MARK: - Error Hints
+
+    private func errorHintForStatus(_ code: Int) -> String? {
+        switch code {
+        case 401: return L10n.logErrorHint401
+        case 403: return L10n.logErrorHint403
+        case 404: return L10n.logErrorHint404
+        case 500: return L10n.logErrorHint500
+        case 502: return L10n.logErrorHint502
+        case 200...299: return nil
+        default: return L10n.logErrorHintGeneric
+        }
+    }
+
+    // MARK: - Save Logs
+
+    private func saveLogs() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText]
+        panel.nameFieldStringValue = "ollama-gateway-logs.csv"
+        panel.title = L10n.saveLogs
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            let formatter = ISO8601DateFormatter()
+            var csv = "Timestamp,Method,Path,Status,Latency(ms),Client\n"
+            for log in appState.requestLogs.prefix(100) {
+                let ts = formatter.string(from: log.timestamp)
+                let path = log.path.contains(",") ? "\"\(log.path)\"" : log.path
+                let client = log.clientIP.contains(",") ? "\"\(log.clientIP)\"" : log.clientIP
+                csv += "\(ts),\(log.method),\(path),\(log.statusCode),\(String(format: "%.1f", log.latencyMs)),\(client)\n"
+            }
+            try? csv.write(to: url, atomically: true, encoding: .utf8)
+        }
     }
 
     private func methodColor(_ method: String) -> Color {
