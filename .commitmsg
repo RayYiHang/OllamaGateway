@@ -1,0 +1,6 @@
+feat: v1.1 - UI优化、Cloudflare Tunnel集成、双语README
+
+UI改进: 预裁剪icns图标, 状态栏修复, 顶栏现代化, 玻璃拟态, 密钥可见性切换, 端口提示弹窗
+新功能: Cloudflare Tunnel一键公网暴露, 设置页Tunnel区域
+代码优化: deinit数据竞争修复, proc.run替代launch, 图标缓存, 退出清理去重
+其他: 双语README, PLAN.md更新, CI去除图标生成步骤

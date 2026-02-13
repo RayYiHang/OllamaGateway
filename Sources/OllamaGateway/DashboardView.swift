@@ -143,14 +143,7 @@ struct DashboardView: View {
             }
             .frame(height: 80)
             .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(theme.cardBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(theme.cardBorder.opacity(0.5), lineWidth: 0.5)
-                    )
-            )
+            .glassCard()
 
             // Time labels
             HStack {
@@ -191,7 +184,11 @@ struct DashboardView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(theme.cardBackground)
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(theme.cardBackground.opacity(0.55))
+                        )
                 )
             } else {
                 VStack(spacing: 0) {
@@ -224,14 +221,7 @@ struct DashboardView: View {
                         }
                     }
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(theme.cardBackground)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(theme.cardBorder.opacity(0.5), lineWidth: 0.5)
-                        )
-                )
+                .glassCard()
             }
         }
     }

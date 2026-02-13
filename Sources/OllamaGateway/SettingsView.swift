@@ -11,12 +11,17 @@ struct SettingsView: View {
     @State private var newKeyInput: String = ""
     @State private var showSaved = false
     @State private var copiedKeyId: String?
+    @State private var revealedKeys: Set<String> = []
+    @State private var showPortInfo = false
+
+    @State private var copiedTunnelURL = false
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 24) {
                 serverConfigSection
                 apiKeysSection
+                tunnelSection
                 appearanceSection
                 generalSection
                 aboutSection
@@ -60,9 +65,30 @@ struct SettingsView: View {
 
                 // Port
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n.serverPort)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(theme.secondaryText)
+                    HStack(spacing: 4) {
+                        Text(L10n.serverPort)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(theme.secondaryText)
+
+                        Button(action: { showPortInfo.toggle() }) {
+                            Image(systemName: "exclamationmark.circle.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(theme.warning)
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $showPortInfo, arrowEdge: .trailing) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(L10n.portInfoTitle)
+                                    .font(.system(size: 12, weight: .bold))
+                                Text(L10n.portInfoDesc)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .padding(12)
+                            .frame(width: 260)
+                        }
+                    }
 
                     TextField("8000", text: $portString)
                         .textFieldStyle(.plain)
@@ -101,14 +127,7 @@ struct SettingsView: View {
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(theme.cardBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(theme.cardBorder.opacity(0.5), lineWidth: 0.5)
-                    )
-            )
+            .glassCard()
         }
     }
 
@@ -175,12 +194,27 @@ struct SettingsView: View {
                                 .font(.system(size: 10))
                                 .foregroundColor(theme.accent.opacity(0.7))
 
-                            Text(maskKey(key))
+                            Text(revealedKeys.contains(key) ? key : maskKey(key))
                                 .font(.system(size: 12, design: .monospaced))
                                 .foregroundColor(theme.primaryText)
                                 .lineLimit(1)
+                                .textSelection(.enabled)
 
                             Spacer()
+
+                            // Reveal / Hide
+                            Button(action: {
+                                if revealedKeys.contains(key) {
+                                    revealedKeys.remove(key)
+                                } else {
+                                    revealedKeys.insert(key)
+                                }
+                            }) {
+                                Image(systemName: revealedKeys.contains(key) ? "eye.slash" : "eye")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(theme.secondaryText)
+                            }
+                            .buttonStyle(.plain)
 
                             // Copy
                             Button(action: {
@@ -211,14 +245,182 @@ struct SettingsView: View {
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(theme.cardBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(theme.cardBorder.opacity(0.5), lineWidth: 0.5)
+            .glassCard()
+        }
+    }
+
+    // MARK: - Cloudflare Tunnel
+
+    private var tunnelSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            SectionHeader(L10n.tunnelTitle)
+
+            VStack(spacing: 12) {
+                // Status row
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(L10n.tunnelStatus)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(theme.primaryText)
+                        Text(tunnelStatusLabel)
+                            .font(.system(size: 11))
+                            .foregroundColor(tunnelStatusColor)
+                    }
+                    Spacer()
+
+                    // Start / Stop button
+                    Button(action: toggleTunnel) {
+                        HStack(spacing: 6) {
+                            if case .starting = appState.tunnelStatus {
+                                ProgressView()
+                                    .scaleEffect(0.5)
+                                    .frame(width: 12, height: 12)
+                            } else {
+                                Image(systemName: appState.tunnelStatus.isRunning ? "stop.fill" : "play.fill")
+                                    .font(.system(size: 10))
+                            }
+                            Text(appState.tunnelStatus.isRunning ? L10n.stop : L10n.start)
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(appState.tunnelStatus.isRunning ? theme.error : Color(r: 245, g: 158, b: 11))
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(appState.tunnelStatus == .starting)
+                }
+
+                // Public URL display
+                if let url = appState.tunnelStatus.publicURL {
+                    Divider().opacity(0.3)
+                    HStack(spacing: 8) {
+                        Image(systemName: "globe")
+                            .font(.system(size: 12))
+                            .foregroundColor(theme.accent)
+                        Text(url)
+                            .font(.system(size: 12, design: .monospaced))
+                            .foregroundColor(theme.primaryText)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .textSelection(.enabled)
+                        Spacer()
+                        Button(action: {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(url, forType: .string)
+                            copiedTunnelURL = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                copiedTunnelURL = false
+                            }
+                        }) {
+                            Text(copiedTunnelURL ? L10n.copied : L10n.copyKey)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(copiedTunnelURL ? theme.success : theme.secondaryText)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(theme.accent.opacity(0.06))
                     )
-            )
+                }
+
+                // Not installed warning
+                if case .notInstalled = appState.tunnelStatus {
+                    Divider().opacity(0.3)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(theme.warning)
+                            Text(L10n.tunnelNotInstalled)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(theme.primaryText)
+                        }
+                        Text(L10n.tunnelInstallHint)
+                            .font(.system(size: 11))
+                            .foregroundColor(theme.secondaryText)
+
+                        Button(action: {
+                            if let url = URL(string: "https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.up.right.square")
+                                    .font(.system(size: 10))
+                                Text(L10n.tunnelInstallLink)
+                                    .font(.system(size: 11, weight: .medium))
+                            }
+                            .foregroundColor(theme.accent)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                // Error message
+                if case .error(let msg) = appState.tunnelStatus {
+                    Divider().opacity(0.3)
+                    HStack(spacing: 6) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(theme.error)
+                        Text(msg)
+                            .font(.system(size: 11))
+                            .foregroundColor(theme.error)
+                            .lineLimit(2)
+                    }
+                }
+
+                // Info
+                HStack(spacing: 6) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 10))
+                        .foregroundColor(theme.secondaryText)
+                    Text(L10n.tunnelInfo)
+                        .font(.system(size: 10))
+                        .foregroundColor(theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(16)
+            .glassCard()
+        }
+    }
+
+    private var tunnelStatusLabel: String {
+        switch appState.tunnelStatus {
+        case .stopped: return L10n.stopped
+        case .starting: return L10n.starting
+        case .running: return L10n.tunnelRunning
+        case .error: return L10n.errorLabel
+        case .notInstalled: return L10n.tunnelNotInstalled
+        }
+    }
+
+    private var tunnelStatusColor: Color {
+        switch appState.tunnelStatus {
+        case .stopped: return theme.secondaryText
+        case .starting: return theme.warning
+        case .running: return theme.success
+        case .error: return theme.error
+        case .notInstalled: return theme.warning
+        }
+    }
+
+    private func toggleTunnel() {
+        if appState.tunnelStatus.isRunning {
+            appState.tunnel?.stop()
+        } else {
+            // Stop any existing tunnel instance first
+            appState.tunnel?.stop()
+            let tunnel = CloudflareTunnel(appState: appState)
+            appState.tunnel = tunnel
+            tunnel.start()
         }
     }
 
@@ -257,14 +459,7 @@ struct SettingsView: View {
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(theme.cardBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(theme.cardBorder.opacity(0.5), lineWidth: 0.5)
-                    )
-            )
+            .glassCard()
         }
     }
 
@@ -347,14 +542,7 @@ struct SettingsView: View {
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(theme.cardBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(theme.cardBorder.opacity(0.5), lineWidth: 0.5)
-                    )
-            )
+            .glassCard()
         }
     }
 
@@ -365,9 +553,7 @@ struct SettingsView: View {
             SectionHeader(L10n.about)
 
             HStack(spacing: 12) {
-                Image(systemName: "server.rack")
-                    .font(.system(size: 28))
-                    .foregroundStyle(theme.accentGradient)
+                AppIconView(size: 36)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Ollama Gateway")
@@ -384,14 +570,7 @@ struct SettingsView: View {
                 Spacer()
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(theme.cardBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(theme.cardBorder.opacity(0.5), lineWidth: 0.5)
-                    )
-            )
+            .glassCard()
         }
     }
 

@@ -1,4 +1,39 @@
+import AppKit
 import SwiftUI
+
+// MARK: - App Icon View (loads StatusBarIcon from bundle)
+
+struct AppIconView: View {
+    let size: CGFloat
+
+    // Cache the loaded image to avoid repeated disk I/O
+    private static let cachedIcon: NSImage? = {
+        guard let path = Bundle.main.path(forResource: "StatusBarIcon", ofType: "icns") else { return nil }
+        return NSImage(contentsOfFile: path)
+    }()
+
+    var body: some View {
+        Group {
+            if let nsImage = Self.cachedIcon {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: size, height: size)
+            } else {
+                Image(systemName: "server.rack")
+                    .font(.system(size: size * 0.7, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color(r: 0, g: 212, b: 170), Color(r: 0, g: 180, b: 216)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: size, height: size)
+            }
+        }
+    }
+}
 
 // MARK: - Stat Card
 
@@ -69,10 +104,14 @@ struct StatCard<Content: View>: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(theme.cardBackground)
+                .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(theme.cardBorder.opacity(0.5), lineWidth: 0.5)
+                        .fill(theme.cardBackground.opacity(0.55))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(theme.cardBorder.opacity(0.3), lineWidth: 0.5)
                 )
         )
     }
@@ -268,10 +307,14 @@ struct DetailCard: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(theme.cardBackground)
+                .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(theme.cardBorder.opacity(0.5), lineWidth: 0.5)
+                        .fill(theme.cardBackground.opacity(0.55))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(theme.cardBorder.opacity(0.3), lineWidth: 0.5)
                 )
         )
     }
@@ -332,5 +375,35 @@ struct SectionHeader: View {
                 .buttonStyle(.plain)
             }
         }
+    }
+}
+
+// MARK: - Glass Card Modifier
+
+struct GlassCardModifier: ViewModifier {
+    let cornerRadius: CGFloat
+    @Environment(\.theme) var theme
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .fill(theme.cardBackground.opacity(0.55))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .stroke(theme.cardBorder.opacity(0.2), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
+            )
+    }
+}
+
+extension View {
+    func glassCard(cornerRadius: CGFloat = 12) -> some View {
+        modifier(GlassCardModifier(cornerRadius: cornerRadius))
     }
 }

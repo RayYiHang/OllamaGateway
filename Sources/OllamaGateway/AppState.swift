@@ -114,6 +114,26 @@ struct DashboardStats {
     }
 }
 
+// MARK: - Tunnel Status
+
+enum TunnelStatus: Equatable {
+    case stopped
+    case starting
+    case running(url: String)
+    case error(String)
+    case notInstalled
+
+    var isRunning: Bool {
+        if case .running = self { return true }
+        return false
+    }
+
+    var publicURL: String? {
+        if case .running(let url) = self { return url }
+        return nil
+    }
+}
+
 // MARK: - App State
 
 @MainActor
@@ -144,10 +164,14 @@ final class AppState: ObservableObject {
     // Update
     @Published var updateAvailable: (version: String, url: String)?
 
+    // Tunnel
+    @Published var tunnelStatus: TunnelStatus = .stopped
+
     // Services
     var proxyServer: ProxyServer?
     var healthChecker: HealthChecker?
     var updateChecker: UpdateChecker?
+    var tunnel: CloudflareTunnel?
 
     static let maxLogEntries = 200
 

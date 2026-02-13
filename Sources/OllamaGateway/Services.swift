@@ -71,8 +71,8 @@ final class UpdateChecker {
     private weak var appState: AppState?
 
     // ⚠️ 配置你的 GitHub 仓库
-    static let repoOwner = "OWNER"
-    static let repoName = "ollamafastapi"
+    static let repoOwner = "RayYiHang"
+    static let repoName = "OllamaGateway"
     nonisolated static let currentVersion: String = {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     }()

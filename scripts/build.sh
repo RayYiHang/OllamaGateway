@@ -36,13 +36,6 @@ fi
 
 echo "✅ Build successful"
 
-# Generate icons if not already present
-ICONS_DIR="$PROJECT_DIR/build/icons"
-if [ ! -f "$ICONS_DIR/AppIcon.icns" ]; then
-    echo "🎨 Generating icons..."
-    bash "$SCRIPT_DIR/generate-icons.sh"
-fi
-
 # Create .app bundle
 APP_DIR="$PROJECT_DIR/build/$APP_NAME.app"
 rm -rf "$APP_DIR"
@@ -54,17 +47,20 @@ echo "📁 Creating app bundle..."
 # Copy binary
 cp "$BINARY_PATH" "$APP_DIR/Contents/MacOS/$APP_NAME"
 
-# Copy icon
-if [ -f "$ICONS_DIR/AppIcon.icns" ]; then
-    cp "$ICONS_DIR/AppIcon.icns" "$APP_DIR/Contents/Resources/"
+# Copy app icon (pre-built .icns)
+if [ -f "$PROJECT_DIR/logo.icns" ]; then
+    cp "$PROJECT_DIR/logo.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
+    echo "✅ Copied logo.icns → AppIcon.icns"
+else
+    echo "⚠️  logo.icns not found, app will have no icon"
 fi
 
-# Copy status bar icon
-if [ -f "$ICONS_DIR/StatusBarIcon.png" ]; then
-    cp "$ICONS_DIR/StatusBarIcon.png" "$APP_DIR/Contents/Resources/"
-fi
-if [ -f "$ICONS_DIR/StatusBarIcon@2x.png" ]; then
-    cp "$ICONS_DIR/StatusBarIcon@2x.png" "$APP_DIR/Contents/Resources/"
+# Copy status bar icon (pre-built .icns)
+if [ -f "$PROJECT_DIR/statuslogo.icns" ]; then
+    cp "$PROJECT_DIR/statuslogo.icns" "$APP_DIR/Contents/Resources/StatusBarIcon.icns"
+    echo "✅ Copied statuslogo.icns → StatusBarIcon.icns"
+else
+    echo "⚠️  statuslogo.icns not found, using fallback SF Symbol"
 fi
 
 # Create Info.plist

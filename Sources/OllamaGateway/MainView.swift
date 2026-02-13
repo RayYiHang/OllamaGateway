@@ -33,9 +33,7 @@ struct MainView: View {
         VStack(spacing: 0) {
             // Header
             HStack(spacing: 10) {
-                Image(systemName: "server.rack")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(theme.accentGradient)
+                AppIconView(size: 28)
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(L10n.appName)
@@ -125,15 +123,16 @@ struct MainView: View {
             // Bottom Controls
             bottomBar
         }
-        .background(theme.sidebarBackground)
+        .background(theme.sidebarBackground.opacity(0.65))
+        .background(.ultraThinMaterial)
     }
 
     // MARK: - Content Area
 
     private var contentView: some View {
         VStack(spacing: 0) {
-            // Tab Bar
-            HStack(spacing: 0) {
+            // Tab Bar — modern frosted style
+            HStack(spacing: 4) {
                 tabButton(.dashboard, icon: "chart.bar.fill", label: L10n.dashboard)
                 tabButton(.settings, icon: "gearshape.fill", label: L10n.settings)
                 Spacer()
@@ -146,9 +145,13 @@ struct MainView: View {
                             : (appState.themeMode == .light
                                 ? "sun.max.fill" : "circle.lefthalf.filled")
                     )
-                    .font(.system(size: 13))
+                    .font(.system(size: 12))
                     .foregroundColor(theme.secondaryText)
-                    .frame(width: 30, height: 30)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(theme.cardBackground.opacity(0.6))
+                    )
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -156,18 +159,20 @@ struct MainView: View {
                 // Language Toggle
                 Button(action: { toggleLanguage() }) {
                     Text(appState.language == .zh ? "EN" : "中")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.system(size: 10, weight: .bold))
                         .foregroundColor(theme.secondaryText)
-                        .frame(width: 30, height: 30)
+                        .frame(width: 28, height: 28)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(theme.cardBackground.opacity(0.6))
+                        )
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(theme.cardBackground.opacity(0.5))
-
-            Divider().opacity(0.3)
+            .padding(.vertical, 6)
+            .background(.ultraThinMaterial)
 
             // Content
             Group {

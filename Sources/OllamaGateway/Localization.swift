@@ -56,6 +56,13 @@ enum L10n {
     // Settings
     static var ollamaBaseURL: String { s("Ollama 地址", "Ollama Base URL") }
     static var serverPort: String { s("监听端口", "Server Port") }
+    static var portInfoTitle: String { s("关于监听端口", "About Server Port") }
+    static var portInfoDesc: String {
+        s(
+            "此端口为反向代理端口。如需使用 API Key 鉴权功能，请将客户端连接到此端口（而非 Ollama 原始端口 11434）。所有经过此端口的请求都需要携带有效的 Bearer Token。",
+            "This is the reverse proxy port. To use API key authentication, connect your client to this port (instead of Ollama's default 11434). All requests through this port require a valid Bearer Token."
+        )
+    }
     static var apiKeysTitle: String { s("API 密钥管理", "API Keys Management") }
     static var addKey: String { s("添加密钥", "Add Key") }
     static var generateKey: String { s("生成随机密钥", "Generate Random Key") }
@@ -102,6 +109,25 @@ enum L10n {
     static var start: String { s("启动", "Start") }
     static var stop: String { s("停止", "Stop") }
     static var port: String { s("端口", "Port") }
+
+    // Cloudflare Tunnel
+    static var tunnelTitle: String { s("Cloudflare Tunnel", "Cloudflare Tunnel") }
+    static var tunnelStatus: String { s("隧道状态", "Tunnel Status") }
+    static var tunnelRunning: String { s("公网已暴露", "Public Access Active") }
+    static var tunnelNotInstalled: String { s("未安装 cloudflared", "cloudflared not installed") }
+    static var tunnelInstallHint: String {
+        s(
+            "需要安装 cloudflared CLI。可通过 Homebrew 安装：brew install cloudflared",
+            "cloudflared CLI is required. Install via Homebrew: brew install cloudflared"
+        )
+    }
+    static var tunnelInstallLink: String { s("查看安装文档", "View Installation Guide") }
+    static var tunnelInfo: String {
+        s(
+            "使用 Cloudflare Quick Tunnel 将本地代理端口暴露到公网，无需公网 IP，自带 HTTPS。",
+            "Uses Cloudflare Quick Tunnel to expose your local proxy to the internet with automatic HTTPS."
+        )
+    }
 
     // MARK: - Helper
 

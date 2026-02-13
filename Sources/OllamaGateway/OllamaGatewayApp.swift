@@ -79,6 +79,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        appState?.tunnel?.stop()
         appState?.proxyServer?.stop()
         appState?.healthChecker?.stop()
         appState?.updateChecker?.stop()
@@ -90,8 +91,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
         if let button = statusItem?.button {
-            // Try to load custom status bar icon
-            if let iconPath = Bundle.main.path(forResource: "StatusBarIcon", ofType: "png"),
+            // Try to load custom status bar icon (.icns)
+            if let iconPath = Bundle.main.path(forResource: "StatusBarIcon", ofType: "icns"),
                 let image = NSImage(contentsOfFile: iconPath)
             {
                 image.size = NSSize(width: 18, height: 18)
@@ -222,7 +223,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func quitApp() {
-        appState?.proxyServer?.stop()
+        // Cleanup handled in applicationWillTerminate
         NSApp.terminate(nil)
     }
 }

@@ -120,9 +120,69 @@ ollamafastapi/
 - `GET /` — 健康检查（无需鉴权）
 - `/{path:path}` — 透明代理到 Ollama（需 Bearer Token）
 
-## 7. 非目标
+## 7. Cloudflare Tunnel 集成
+
+### 7.1 方案
+
+集成 `cloudflared` CLI，用户可在设置中一键开启 Cloudflare Tunnel，实现：
+- 将本地 Ollama Gateway 端口直接暴露到公网
+- 无需公网 IP、无需端口转发、自动 HTTPS
+- 使用 `cloudflared tunnel --url http://localhost:<port>` 快速隧道模式
+
+### 7.2 技术实现
+
+- 自动检测 `cloudflared` 是否安装（`which cloudflared`）
+- 未安装时提示用户通过 `brew install cloudflared` 安装
+- 使用 `Process` (Foundation) 启动/停止 `cloudflared` 进程
+- 捕获 stdout/stderr 解析隧道 URL（`*.trycloudflare.com`）
+- 隧道 URL 显示在设置面板中，支持一键复制
+- 隧道状态独立于代理服务器，可单独启停
+
+### 7.3 状态模型
+
+```swift
+enum TunnelStatus {
+    case stopped
+    case starting
+    case running(url: String)
+    case error(String)
+    case notInstalled
+}
+```
+
+### 7.4 UI 位置
+
+在 SettingsView 中新增 "Cloudflare Tunnel" section，包含：
+- 启动/停止按钮
+- 隧道状态指示
+- 公网 URL 显示 + 复制按钮
+- 安装引导链接
+
+## 8. v1.1 UI 优化
+
+### 8.1 玻璃拟态效果
+
+- 侧边栏、卡片背景使用 `.ultraThinMaterial` / `.thinMaterial`
+- 顶部 Tab Bar 使用 `.bar` material
+- 整体增加磨砂玻璃质感，突出高级感
+
+### 8.2 Logo 修正
+
+- App Icon: 使用 `./logo.icns`（已裁剪）
+- Status Bar Icon: 使用 `./statuslogo.icns`
+- 软件内 Logo: 使用 StatusBarIcon 资源
+- Status Bar 图标设置 `isTemplate = true`，确保正确渲染
+
+### 8.3 密钥查看
+
+- API Key 列表中增加"眼睛"图标切换显示/隐藏完整密钥
+
+### 8.4 端口说明
+
+- 监听端口旁增加感叹号图标 + Popover 说明反代用途
+
+## 9. 非目标
 
 - 不替代 Docker 部署（Python 版本保留）
 - 不做 Windows/Linux 版本
-- 不做限流（可由 Cloudflare 处理）
 - 不做用户权限管理系统
