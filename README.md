@@ -166,11 +166,11 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ## ⚙️ 配置
 
-| 项目            | 默认值                   | 说明                    |
-| --------------- | ------------------------ | ----------------------- |
-| Ollama Base URL | `http://localhost:11434` | Ollama 服务地址         |
-| Server Port     | `8000`                   | 网关监听（反代）端口    |
-| API Keys        | —                        | 鉴权密钥（支持多个）    |
+| 项目            | 默认值                   | 说明                     |
+| --------------- | ------------------------ | ------------------------ |
+| Ollama Base URL | `http://localhost:11434` | Ollama 服务地址          |
+| Server Port     | `8000`                   | 网关监听（反代）端口     |
+| API Keys        | —                        | 鉴权密钥（支持多个）     |
 | CF Tunnel       | 关闭                     | 一键 Cloudflare 公网暴露 |
 
 所有配置通过应用 GUI 管理，持久化在 UserDefaults 中。

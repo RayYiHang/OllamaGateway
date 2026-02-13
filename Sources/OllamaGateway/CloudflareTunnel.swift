@@ -42,7 +42,8 @@ final class CloudflareTunnel {
             process.waitUntilExit()
             if process.terminationStatus == 0 {
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                return String(data: data, encoding: .utf8)?.trimmingCharacters(
+                    in: .whitespacesAndNewlines)
             }
         } catch {}
         return nil
@@ -73,7 +74,7 @@ final class CloudflareTunnel {
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: cfPath)
         proc.arguments = [
-            "tunnel", "--url", "http://localhost:\(appState.config.port)"
+            "tunnel", "--url", "http://localhost:\(appState.config.port)",
         ]
 
         let pipe = Pipe()
@@ -102,7 +103,8 @@ final class CloudflareTunnel {
                 guard let self = self else { return }
                 if proc.terminationStatus != 0 {
                     if case .starting = self.appState?.tunnelStatus {
-                        self.appState?.tunnelStatus = .error("Process exited with code \(proc.terminationStatus)")
+                        self.appState?.tunnelStatus = .error(
+                            "Process exited with code \(proc.terminationStatus)")
                     }
                 } else {
                     self.appState?.tunnelStatus = .stopped
@@ -156,14 +158,18 @@ final class CloudflareTunnel {
         let lines = output.components(separatedBy: .newlines)
         for line in lines {
             // Look for HTTPS URL patterns
-            if let range = line.range(of: "https://[a-zA-Z0-9\\-]+\\.trycloudflare\\.com", options: .regularExpression) {
+            if let range = line.range(
+                of: "https://[a-zA-Z0-9\\-]+\\.trycloudflare\\.com", options: .regularExpression)
+            {
                 let url = String(line[range])
                 appState?.tunnelStatus = .running(url: url)
                 return
             }
             // Also match custom domain URLs from cloudflared
-            if let range = line.range(of: "https://[a-zA-Z0-9\\-\\.]+", options: .regularExpression),
-               line.contains("trycloudflare") || line.contains("cfargotunnel") {
+            if let range = line.range(
+                of: "https://[a-zA-Z0-9\\-\\.]+", options: .regularExpression),
+                line.contains("trycloudflare") || line.contains("cfargotunnel")
+            {
                 let url = String(line[range])
                 appState?.tunnelStatus = .running(url: url)
                 return

@@ -8,7 +8,9 @@ struct AppIconView: View {
 
     // Cache the loaded image to avoid repeated disk I/O
     private static let cachedIcon: NSImage? = {
-        guard let path = Bundle.main.path(forResource: "StatusBarIcon", ofType: "icns") else { return nil }
+        guard let path = Bundle.main.path(forResource: "StatusBarIcon", ofType: "icns") else {
+            return nil
+        }
         return NSImage(contentsOfFile: path)
     }()
 

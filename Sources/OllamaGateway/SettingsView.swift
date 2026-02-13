@@ -276,8 +276,11 @@ struct SettingsView: View {
                                     .scaleEffect(0.5)
                                     .frame(width: 12, height: 12)
                             } else {
-                                Image(systemName: appState.tunnelStatus.isRunning ? "stop.fill" : "play.fill")
-                                    .font(.system(size: 10))
+                                Image(
+                                    systemName: appState.tunnelStatus.isRunning
+                                        ? "stop.fill" : "play.fill"
+                                )
+                                .font(.system(size: 10))
                             }
                             Text(appState.tunnelStatus.isRunning ? L10n.stop : L10n.start)
                                 .font(.system(size: 12, weight: .semibold))
@@ -287,7 +290,9 @@ struct SettingsView: View {
                         .padding(.vertical, 7)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(appState.tunnelStatus.isRunning ? theme.error : Color(r: 245, g: 158, b: 11))
+                                .fill(
+                                    appState.tunnelStatus.isRunning
+                                        ? theme.error : Color(r: 245, g: 158, b: 11))
                         )
                     }
                     .buttonStyle(.plain)
@@ -318,7 +323,8 @@ struct SettingsView: View {
                         }) {
                             Text(copiedTunnelURL ? L10n.copied : L10n.copyKey)
                                 .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(copiedTunnelURL ? theme.success : theme.secondaryText)
+                                .foregroundColor(
+                                    copiedTunnelURL ? theme.success : theme.secondaryText)
                         }
                         .buttonStyle(.plain)
                     }
@@ -346,7 +352,10 @@ struct SettingsView: View {
                             .foregroundColor(theme.secondaryText)
 
                         Button(action: {
-                            if let url = URL(string: "https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/") {
+                            if let url = URL(
+                                string:
+                                    "https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/"
+                            ) {
                                 NSWorkspace.shared.open(url)
                             }
                         }) {

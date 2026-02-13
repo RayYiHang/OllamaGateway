@@ -125,6 +125,7 @@ ollamafastapi/
 ### 7.1 方案
 
 集成 `cloudflared` CLI，用户可在设置中一键开启 Cloudflare Tunnel，实现：
+
 - 将本地 Ollama Gateway 端口直接暴露到公网
 - 无需公网 IP、无需端口转发、自动 HTTPS
 - 使用 `cloudflared tunnel --url http://localhost:<port>` 快速隧道模式
@@ -153,6 +154,7 @@ enum TunnelStatus {
 ### 7.4 UI 位置
 
 在 SettingsView 中新增 "Cloudflare Tunnel" section，包含：
+
 - 启动/停止按钮
 - 隧道状态指示
 - 公网 URL 显示 + 复制按钮
