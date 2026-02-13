@@ -2,3 +2,12 @@
 __pycache__/
 *.pyc
 .venv/
+.build/
+build/
+.swiftpm/
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+.DS_Store
+*.dmg
+*.egg-info/
