@@ -39,7 +39,10 @@ struct DashboardView: View {
             }
             .padding(20)
         }
-        .background(theme.background)
+        .background(
+            theme.background.opacity(0.6)
+                .background(.ultraThinMaterial)
+        )
     }
 
     // MARK: - Header
@@ -139,7 +142,8 @@ struct DashboardView: View {
                                     : theme.cardBorder.opacity(0.15)
                             )
                             .frame(width: barWidth, height: h)
-                            .animation(.easeOut(duration: 0.3).delay(Double(i) * 0.003), value: data[i])
+                            .animation(
+                                .easeOut(duration: 0.3).delay(Double(i) * 0.003), value: data[i])
                     }
                 }
             }
@@ -327,7 +331,8 @@ struct DashboardView: View {
                 let ts = formatter.string(from: log.timestamp)
                 let path = log.path.contains(",") ? "\"\(log.path)\"" : log.path
                 let client = log.clientIP.contains(",") ? "\"\(log.clientIP)\"" : log.clientIP
-                csv += "\(ts),\(log.method),\(path),\(log.statusCode),\(String(format: "%.1f", log.latencyMs)),\(client)\n"
+                csv +=
+                    "\(ts),\(log.method),\(path),\(log.statusCode),\(String(format: "%.1f", log.latencyMs)),\(client)\n"
             }
             try? csv.write(to: url, atomically: true, encoding: .utf8)
         }

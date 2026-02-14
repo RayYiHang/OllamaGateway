@@ -28,7 +28,10 @@ struct SettingsView: View {
             }
             .padding(20)
         }
-        .background(theme.background)
+        .background(
+            theme.background.opacity(0.6)
+                .background(.ultraThinMaterial)
+        )
         .onAppear {
             ollamaURL = appState.config.ollamaBaseURL
             portString = "\(appState.config.port)"

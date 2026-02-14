@@ -14,31 +14,34 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue" alt="License"></a>
   <img src="https://img.shields.io/badge/Swift-5.9-F05138?logo=swift&logoColor=white" alt="Swift">
   <img src="https://img.shields.io/badge/Zero_Dependencies-✓-00D4AA" alt="Zero Deps">
-  <img src="https://img.shields.io/github/actions/workflow/status/RayYiHang/OllamaGateway/release.yml?label=CI" alt="CI">
+  <a href="https://github.com/RayYiHang/OllamaGateway/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/RayYiHang/OllamaGateway/release.yml?label=CI" alt="CI"></a>
 </p>
 
 <p align="center">
-  <sub>原生 Swift · 零依赖 · 3MB 极简体积 · 磨砂玻璃 UI · 一键公网</sub>
+  <sub>原生 Swift · 零依赖 · 轻量 · 磨砂玻璃 UI · 一键公网</sub>
 </p>
 
 <p align="center">
-  <a href="#-features">English</a> · <a href="#-特性">中文</a>
+  中文 · <a href="README_EN.md">English</a>
 </p>
 
 ---
 
 ## ✨ 特性
 
-- 🖥️ **原生 macOS 应用** — SwiftUI + 磨砂玻璃 UI，零外部依赖，仅 3MB
+- 🖥️ **原生 macOS 应用** — SwiftUI + 磨砂玻璃 UI，零外部依赖
 - 🔐 **API Key 鉴权** — Bearer Token 认证，保护你的 Ollama 服务
-- 🌐 **Cloudflare Tunnel** — 一键暴露公网，自带 HTTPS，无需端口转发
-- 📊 **实时 Dashboard** — 请求统计、延迟监控、成功率、活动图表
-- 🔄 **透明代理** — 完整支持流式响应（SSE），兼容所有 Ollama API
-- 🌙 **明暗主题** — 深色/浅色/跟随系统，磨砂玻璃高级感
+- 🌐 **Cloudflare Tunnel** — 一键暴露公网，自带 HTTPS，内置 cloudflared 自动下载
+- 📊 **实时 Dashboard** — 请求统计、延迟监控、成功率、活动图表、错误状态提示
+- 🔄 **透明代理** — 完整支持流式响应（SSE），兼容所有 Ollama API（含 Cloud 模型）
+- 🌙 **明暗主题** — 深色/浅色/跟随系统，全局磨砂玻璃高级感
 - 🌍 **中英双语** — 默认中文，一键切换
-- 📌 **状态栏常驻** — Menu Bar + Dock 双图标，随时控制
+- 📌 **状态栏常驻** — 左键显示窗口，右键弹出菜单
 - 🚀 **开机自启** — 系统级 Login Item 支持
-- 🔄 **自动更新** — 自动检测 GitHub 新版本
+- 🔄 **自动更新** — 自动检测 GitHub 新版本，一键下载安装
+- 🙈 **隐藏 Dock** — 可选隐藏 Dock 图标，仅保留状态栏
+- ☁️ **自动 Tunnel** — 可选随服务自动启动 Cloudflare Tunnel
+- 💾 **导出日志** — 请求日志导出为 CSV 文件
 - 🐳 **Docker 可选** — 同时提供 Python FastAPI 版本用于服务器部署
 
 ## 📥 安装
@@ -53,6 +56,14 @@
 | Intel                       | `OllamaGateway-vX.X.X-x86_64.dmg` |
 
 打开 DMG → 拖入 Applications → 首次启动右键"打开"。
+
+> ⚠️ **macOS 签名提示**：因应用未签名，首次打开可能被 macOS 拦截。在终端运行：
+>
+> ```bash
+> xattr -cr /Applications/OllamaGateway.app
+> ```
+>
+> 之后双击即可正常启动。
 
 ### 方式二：从源码构建
 
@@ -86,10 +97,26 @@ curl http://localhost:8000/api/chat \
 
 ### 🌐 一键公网暴露
 
-1. 安装 cloudflared：`brew install cloudflared`
-2. 应用 → 设置 → Cloudflare Tunnel → 点击「启动」
+1. 应用 → 设置 → Cloudflare Tunnel → 点击「启动」
+2. 首次使用会自动下载 cloudflared（无需手动安装）
 3. 获得一个 `*.trycloudflare.com` HTTPS 地址
 4. 分享此地址即可远程使用你的 Ollama 服务
+
+> 💡 在设置中开启"自动启动 Tunnel"，随服务一起自动开启。
+
+### ⚙️ Ollama 环境变量配置
+
+如果遇到连接问题或 Cloud 模型 404 错误，请配置 Ollama 环境变量：
+
+```bash
+# 允许所有来源访问（推荐在使用反向代理时设置）
+launchctl setenv OLLAMA_ORIGINS "*"
+
+# 如需允许远程访问 Ollama
+launchctl setenv OLLAMA_HOST "0.0.0.0:11434"
+```
+
+> 设置后需重启 Ollama 应用。网关已内置 Host header 转发，确保与 Ollama 的 Host 校验兼容。
 
 ## 🏗️ 架构
 
@@ -97,6 +124,7 @@ curl http://localhost:8000/api/chat \
 Client → Ollama Gateway (:8000) → Ollama (:11434)
               │
          API Key 验证
+         Host Header 转发
          请求日志记录
          流式响应转发
               │
@@ -110,7 +138,7 @@ Client → Ollama Gateway (:8000) → Ollama (:11434)
 - HTTP 服务器：`NWListener`（零依赖，系统框架）
 - HTTP 客户端：`URLSession`（原生流式传输）
 - GUI：SwiftUI（磨砂玻璃 Material Design）
-- 隧道：`cloudflared` CLI 集成
+- 隧道：内置 `cloudflared` 自动下载管理
 - 无任何第三方库
 
 ## 🐳 Docker 部署（服务器版）
@@ -147,10 +175,10 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ├── Package.swift                     # Swift 项目（零依赖）
 ├── Sources/OllamaGateway/
 │   ├── OllamaGatewayApp.swift        # 应用入口 + StatusBar
-│   ├── ProxyServer.swift             # HTTP 反向代理服务器
+│   ├── ProxyServer.swift             # HTTP 反向代理（含 Host Header 转发）
 │   ├── AppState.swift                # 数据模型 + 状态管理
 │   ├── Services.swift                # 健康检测 + 更新检查
-│   ├── CloudflareTunnel.swift        # Cloudflare Tunnel 集成
+│   ├── CloudflareTunnel.swift        # Cloudflare Tunnel（自动下载）
 │   ├── MainView.swift                # 主窗口布局
 │   ├── DashboardView.swift           # 仪表盘
 │   ├── SettingsView.swift            # 设置面板
@@ -172,6 +200,8 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 | Server Port     | `8000`                   | 网关监听（反代）端口     |
 | API Keys        | —                        | 鉴权密钥（支持多个）     |
 | CF Tunnel       | 关闭                     | 一键 Cloudflare 公网暴露 |
+| 隐藏 Dock       | 关闭                     | 仅保留状态栏图标         |
+| 自动 Tunnel     | 关闭                     | 随服务自动启动 Tunnel    |
 
 所有配置通过应用 GUI 管理，持久化在 UserDefaults 中。
 
@@ -189,7 +219,7 @@ bash scripts/build.sh release
 bash scripts/create-dmg.sh
 
 # 发布新版本
-git tag v1.0.0 && git push origin v1.0.0
+git tag 1.0.0 && git push origin 1.0.0
 # → GitHub Actions 自动构建 arm64 + x86_64 DMG
 ```
 
@@ -202,76 +232,10 @@ git tag v1.0.0 && git push origin v1.0.0
 
 兼容所有 OpenAI 格式客户端（Cursor、Continue、Open WebUI 等）。
 
----
+## 🤝 贡献
 
-## ✨ Features
+欢迎提交 PR 和 Issue！中英文均可。
 
-- 🖥️ **Native macOS App** — SwiftUI + frosted glass UI, zero external dependencies, only 3MB
-- 🔐 **API Key Auth** — Bearer Token authentication to protect your Ollama service
-- 🌐 **Cloudflare Tunnel** — One-click public exposure with automatic HTTPS
-- 📊 **Real-time Dashboard** — Request stats, latency monitoring, success rate, activity charts
-- 🔄 **Transparent Proxy** — Full SSE streaming support, compatible with all Ollama APIs
-- 🌙 **Dark/Light Theme** — Dark/Light/System with glassmorphism aesthetics
-- 🌍 **Bilingual** — Chinese (default) + English, one-click switch
-- 📌 **Menu Bar + Dock** — Always-accessible status bar controls
-- 🚀 **Launch at Login** — System-level Login Item support
-- 🔄 **Auto Update** — Automatic GitHub release detection
-- 🐳 **Docker Alternative** — Python FastAPI version for server deployment
-
-## 📥 Installation
-
-### Option 1: Download DMG (Recommended)
-
-Go to [Releases](https://github.com/RayYiHang/OllamaGateway/releases/latest) and download the `.dmg` for your architecture:
-
-| Chip                        | File                              |
-| --------------------------- | --------------------------------- |
-| Apple Silicon (M1/M2/M3/M4) | `OllamaGateway-vX.X.X-arm64.dmg`  |
-| Intel                       | `OllamaGateway-vX.X.X-x86_64.dmg` |
-
-Open DMG → Drag to Applications → First launch: right-click → "Open".
-
-### Option 2: Build from Source
-
-```bash
-git clone https://github.com/RayYiHang/OllamaGateway.git
-cd OllamaGateway
-bash scripts/build.sh release
-open build/OllamaGateway.app
-```
-
-> Requires macOS 13+ and Xcode Command Line Tools
-
-## 🚀 Quick Start
-
-1. **Open the app** → Go to Settings tab
-2. **Configure Ollama URL** → Default `http://localhost:11434`
-3. **Add API Key** → Click "Generate Random Key" or enter manually
-4. **Start Server** → Click the "Start" button in the bottom-left
-5. **Use the Gateway** →
-
-```bash
-# Health check
-curl http://localhost:8000/
-
-# Chat (auth required)
-curl http://localhost:8000/api/chat \
-  -H "Authorization: Bearer sk-your-key" \
-  -H "Content-Type: application/json" \
-  -d '{"model": "qwen2.5", "messages": [{"role": "user", "content": "hello"}]}'
-```
-
-### 🌐 One-Click Public Access
-
-1. Install cloudflared: `brew install cloudflared`
-2. App → Settings → Cloudflare Tunnel → Click "Start"
-3. Get a `*.trycloudflare.com` HTTPS URL
-4. Share this URL for remote access to your Ollama service
-
-## 🤝 Contributing
-
-PRs and Issues welcome! Both Chinese and English are fine.
-
-## 📄 License
+## 📄 许可
 
 [MIT](LICENSE)

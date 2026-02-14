@@ -259,14 +259,28 @@ final class ProxyServer {
         urlRequest.httpMethod = request.method
         urlRequest.timeoutInterval = 300
 
-        // Forward headers (skip hop-by-hop)
+        // Forward headers (skip hop-by-hop and headers we set explicitly)
         let skipHeaders: Set<String> = [
-            "host", "authorization", "connection", "keep-alive", "transfer-encoding",
-            "content-length",
+            "host", "origin", "authorization", "connection", "keep-alive",
+            "transfer-encoding", "content-length",
         ]
         for (key, value) in request.headers where !skipHeaders.contains(key) {
             urlRequest.setValue(value, forHTTPHeaderField: key)
         }
+
+        // Explicitly set Host header to match Ollama's expected host.
+        // Ollama validates the Host header via its checkHost middleware and
+        // returns 404 for unrecognised hosts. This is critical when proxying
+        // through Cloudflare Tunnel or any external ingress.
+        if let components = URLComponents(string: config.ollamaBaseURL),
+            let host = components.host
+        {
+            let hostValue = components.port != nil ? "\(host):\(components.port!)" : host
+            urlRequest.setValue(hostValue, forHTTPHeaderField: "Host")
+        }
+
+        // Set Origin to the Ollama base URL so Ollama's CORS check (OLLAMA_ORIGINS) passes.
+        urlRequest.setValue(config.ollamaBaseURL, forHTTPHeaderField: "Origin")
 
         if !request.body.isEmpty {
             urlRequest.httpBody = request.body

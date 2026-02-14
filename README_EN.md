@@ -33,7 +33,7 @@
 - 🔐 **API Key Auth** — Bearer Token authentication to protect your Ollama service
 - 🌐 **Cloudflare Tunnel** — One-click public exposure with automatic HTTPS, built-in cloudflared auto-download
 - 📊 **Real-time Dashboard** — Request stats, latency monitoring, success rate, activity charts, error status hints
-- 🔄 **Transparent Proxy** — Full SSE streaming support, compatible with all Ollama APIs
+- 🔄 **Transparent Proxy** — Full SSE streaming support, compatible with all Ollama APIs (including Cloud models)
 - 🌙 **Dark/Light Theme** — Dark/Light/System with glassmorphism aesthetics
 - 🌍 **Bilingual** — Chinese (default) + English, one-click switch
 - 📌 **Menu Bar** — Status bar icon with left-click to show window, right-click for menu
@@ -50,10 +50,10 @@
 
 Go to [Releases](https://github.com/RayYiHang/OllamaGateway/releases/latest) and download the `.dmg` for your architecture:
 
-| Chip | File |
-|------|------|
-| Apple Silicon (M1/M2/M3/M4) | `OllamaGateway-vX.X.X-arm64.dmg` |
-| Intel | `OllamaGateway-vX.X.X-x86_64.dmg` |
+| Chip                        | File                              |
+| --------------------------- | --------------------------------- |
+| Apple Silicon (M1/M2/M3/M4) | `OllamaGateway-vX.X.X-arm64.dmg`  |
+| Intel                       | `OllamaGateway-vX.X.X-x86_64.dmg` |
 
 Open DMG → Drag to Applications → First launch: right-click → "Open".
 
@@ -104,12 +104,27 @@ curl http://localhost:8000/api/chat \
 
 > 💡 Enable "Auto-start Tunnel" in settings to start automatically with the server.
 
+### ⚙️ Ollama Environment Variables
+
+If you encounter connection issues or Cloud model 404 errors, configure these Ollama environment variables:
+
+```bash
+# Allow all origins (recommended when using a reverse proxy)
+launchctl setenv OLLAMA_ORIGINS "*"
+
+# To allow remote access to Ollama
+launchctl setenv OLLAMA_HOST "0.0.0.0:11434"
+```
+
+> Restart the Ollama app after setting these. The gateway already forwards the correct Host header for Ollama compatibility.
+
 ## 🏗️ Architecture
 
 ```
 Client → Ollama Gateway (:8000) → Ollama (:11434)
               │
          API Key Validation
+         Host Header Forwarding
          Request Logging
          Streaming Forward
               │
@@ -160,7 +175,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ├── Package.swift                     # Swift project (zero dependencies)
 ├── Sources/OllamaGateway/
 │   ├── OllamaGatewayApp.swift        # App entry + StatusBar
-│   ├── ProxyServer.swift             # HTTP reverse proxy server
+│   ├── ProxyServer.swift             # HTTP reverse proxy (with Host header forwarding)
 │   ├── AppState.swift                # Data models + state management
 │   ├── Services.swift                # Health check + update checker
 │   ├── CloudflareTunnel.swift        # Cloudflare Tunnel (auto-download)
@@ -179,14 +194,14 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ## ⚙️ Configuration
 
-| Setting | Default | Description |
-|---------|---------|-------------|
-| Ollama Base URL | `http://localhost:11434` | Ollama service address |
-| Server Port | `8000` | Gateway listening port |
-| API Keys | — | Auth keys (multiple supported) |
-| CF Tunnel | Off | One-click Cloudflare public access |
-| Hide Dock | Off | Keep only menu bar icon |
-| Auto Tunnel | Off | Auto-start tunnel with server |
+| Setting         | Default                  | Description                        |
+| --------------- | ------------------------ | ---------------------------------- |
+| Ollama Base URL | `http://localhost:11434` | Ollama service address             |
+| Server Port     | `8000`                   | Gateway listening port             |
+| API Keys        | —                        | Auth keys (multiple supported)     |
+| CF Tunnel       | Off                      | One-click Cloudflare public access |
+| Hide Dock       | Off                      | Keep only menu bar icon            |
+| Auto Tunnel     | Off                      | Auto-start tunnel with server      |
 
 All settings are managed through the app GUI and persisted in UserDefaults.
 
@@ -204,15 +219,15 @@ bash scripts/build.sh release
 bash scripts/create-dmg.sh
 
 # Publish new version
-git tag v1.2.0 && git push origin v1.2.0
+git tag 1.0.0 && git push origin 1.0.0
 # → GitHub Actions auto-builds arm64 + x86_64 DMG
 ```
 
 ## 📋 API Behavior
 
-| Endpoint | Auth | Description |
-|----------|------|-------------|
-| `GET /` | ✗ | Health check |
+| Endpoint  | Auth           | Description                 |
+| --------- | -------------- | --------------------------- |
+| `GET /`   | ✗              | Health check                |
 | `/{path}` | ✓ Bearer Token | Transparent proxy to Ollama |
 
 Compatible with all OpenAI-format clients (Cursor, Continue, Open WebUI, etc.).

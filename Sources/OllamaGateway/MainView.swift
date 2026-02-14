@@ -20,7 +20,8 @@ struct MainView: View {
                 .frame(minWidth: 500)
         }
         .frame(minWidth: 780, minHeight: 520)
-        .background(theme.background)
+        .background(.ultraThinMaterial)
+        .background(theme.background.opacity(0.85))
         .environment(\.theme, theme)
         .onReceive(uptimeTimer) { _ in
             updateUptime()
@@ -31,7 +32,7 @@ struct MainView: View {
 
     private var sidebarView: some View {
         VStack(spacing: 0) {
-            // Header
+            // Header (extra top padding for traffic-light buttons)
             HStack(spacing: 10) {
                 AppIconView(size: 28)
 
@@ -46,7 +47,7 @@ struct MainView: View {
                 Spacer()
             }
             .padding(.horizontal, 16)
-            .padding(.top, 16)
+            .padding(.top, 28)
             .padding(.bottom, 12)
 
             Divider().opacity(0.3)
@@ -123,15 +124,19 @@ struct MainView: View {
             // Bottom Controls
             bottomBar
         }
-        .background(theme.sidebarBackground.opacity(0.65))
-        .background(.ultraThinMaterial)
+        .background(
+            ZStack {
+                theme.sidebarBackground.opacity(0.45)
+                    .background(.ultraThinMaterial)
+            }
+        )
     }
 
     // MARK: - Content Area
 
     private var contentView: some View {
         VStack(spacing: 0) {
-            // Tab Bar — modern frosted style
+            // Tab Bar — frosted glass with extra top padding
             HStack(spacing: 4) {
                 tabButton(.dashboard, icon: "chart.bar.fill", label: L10n.dashboard)
                 tabButton(.settings, icon: "gearshape.fill", label: L10n.settings)
@@ -171,8 +176,12 @@ struct MainView: View {
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 6)
-            .background(.ultraThinMaterial)
+            .padding(.top, 22)
+            .padding(.bottom, 6)
+            .background(
+                theme.cardBackground.opacity(0.3)
+                    .background(.ultraThinMaterial)
+            )
 
             // Content
             Group {
@@ -210,8 +219,8 @@ struct MainView: View {
     // MARK: - Bottom Bar
 
     private var bottomBar: some View {
-        VStack(spacing: 8) {
-            Divider().opacity(0.3)
+        VStack(spacing: 0) {
+            Divider().opacity(0.15)
 
             HStack(spacing: 10) {
                 Button(action: { toggleServer() }) {
@@ -240,7 +249,11 @@ struct MainView: View {
                     .foregroundColor(theme.secondaryText)
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 12)
+            .padding(.vertical, 10)
+            .background(
+                theme.cardBackground.opacity(0.25)
+                    .background(.ultraThinMaterial)
+            )
         }
     }
 

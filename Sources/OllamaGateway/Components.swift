@@ -91,6 +91,8 @@ struct StatCard<Content: View>: View {
                 Text(value)
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(theme.primaryText)
+                    .contentTransition(.numericText())
+                    .animation(.spring(response: 0.4), value: value)
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(.system(size: 11))
@@ -109,11 +111,21 @@ struct StatCard<Content: View>: View {
                 .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(theme.cardBackground.opacity(0.55))
+                        .fill(theme.cardBackground.opacity(0.45))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(theme.cardBorder.opacity(0.3), lineWidth: 0.5)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    theme.cardBorder.opacity(0.35),
+                                    theme.cardBorder.opacity(0.08),
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 0.5
+                        )
                 )
         )
     }
@@ -143,6 +155,7 @@ extension StatCard where Content == EmptyView {
 struct HealthBadge: View {
     let status: OllamaStatus
     @Environment(\.theme) var theme
+    @State private var isPulsing = false
 
     var color: Color {
         switch status {
@@ -157,7 +170,18 @@ struct HealthBadge: View {
             Circle()
                 .fill(color)
                 .frame(width: 8, height: 8)
-                .shadow(color: color.opacity(0.5), radius: 3)
+                .shadow(color: color.opacity(isPulsing ? 0.7 : 0.3), radius: isPulsing ? 5 : 3)
+                .scaleEffect(isPulsing ? 1.15 : 1.0)
+                .animation(
+                    status == .online
+                        ? .easeInOut(duration: 1.5).repeatForever(autoreverses: true)
+                        : .default,
+                    value: isPulsing
+                )
+                .onAppear { isPulsing = status == .online }
+                .onChange(of: status) { newStatus in
+                    isPulsing = newStatus == .online
+                }
             Text(status == .online ? L10n.online : (status == .offline ? L10n.offline : "..."))
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(color)
@@ -319,15 +343,29 @@ struct DetailCard: View {
                 .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(theme.cardBackground.opacity(0.55))
+                        .fill(theme.cardBackground.opacity(isHovered ? 0.55 : 0.45))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(theme.cardBorder.opacity(isHovered ? 0.6 : 0.3), lineWidth: 0.5)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    (isHovered
+                                        ? iconColor.opacity(0.4) : theme.cardBorder.opacity(0.35)),
+                                    theme.cardBorder.opacity(0.08),
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: isHovered ? 1 : 0.5
+                        )
                 )
+                .shadow(
+                    color: isHovered ? iconColor.opacity(0.15) : .black.opacity(0.06),
+                    radius: isHovered ? 12 : 8, x: 0, y: isHovered ? 4 : 2)
         )
         .scaleEffect(isHovered ? 1.02 : 1.0)
-        .animation(.easeInOut(duration: 0.15), value: isHovered)
+        .animation(.easeInOut(duration: 0.2), value: isHovered)
         .onHover { isHovered = $0 }
     }
 }
@@ -403,13 +441,23 @@ struct GlassCardModifier: ViewModifier {
                     .fill(.ultraThinMaterial)
                     .overlay(
                         RoundedRectangle(cornerRadius: cornerRadius)
-                            .fill(theme.cardBackground.opacity(0.55))
+                            .fill(theme.cardBackground.opacity(0.45))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: cornerRadius)
-                            .stroke(theme.cardBorder.opacity(0.2), lineWidth: 0.5)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        theme.cardBorder.opacity(0.35),
+                                        theme.cardBorder.opacity(0.08),
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.5
+                            )
                     )
-                    .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
+                    .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
             )
     }
 }

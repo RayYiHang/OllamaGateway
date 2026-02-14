@@ -250,3 +250,58 @@ enum TunnelStatus {
 
 - 点击状态栏图标弹出窗口
 - "服务运行中" → "Ollama Gateway: 运行中"
+
+## 11. v1.3 修复与增强
+
+### 11.1 Ollama Host Header 修复（404 问题）
+
+**问题**：通过反向代理访问 Ollama Cloud 模型时返回 404。
+
+**根因**：Ollama 服务器内部有 `checkHost` 中间件，验证 HTTP 请求的 `Host` header 是否匹配 `OLLAMA_HOST` 配置（默认 `localhost:11434`）。如果不匹配就直接返回 404。当请求经由反向代理时，URLSession 默认按目标 URL 设置 Host，但在某些网络配置下可能不一致。此外 Ollama 也校验 `Origin` header。
+
+**修复方案**：
+
+- 在 `ProxyServer.forwardToOllama()` 中显式设置 `Host` header 为 Ollama base URL 的 host:port
+- 添加 `Origin` header 为 Ollama base URL origin，绕过 CORS 检查
+- README 中增加 `OLLAMA_ORIGINS=*` 环境变量配置说明
+
+**参考**：
+
+- Ollama 官方 FAQ：Nginx `proxy_set_header Host localhost:11434;`
+- ngrok：`--host-header="localhost:11434"`
+- cloudflared：`--http-host-header="localhost:11434"`
+
+### 11.2 标题栏无缝融合
+
+**问题**：窗口标题栏虽设置了 `titlebarAppearsTransparent`，但仍有明显的分割线或颜色差异。
+
+**修复方案**：
+
+- 在 Scene 上使用 `.windowStyle(.hiddenTitleBar)` 彻底隐藏标题栏
+- 移除手动 NSWindow 样式设置（改由 SwiftUI 声明式管理）
+- 侧边栏顶部增加 padding 补偿标题栏区域
+- 内容区背景延伸到标题栏区域，实现 edge-to-edge 设计
+
+### 11.3 磨玻璃 UI + 动效全面升级
+
+**增强点**：
+
+- 整体背景使用 `NSVisualEffectView` 或 `.background(.ultraThinMaterial)` 替代纯色
+- 卡片使用多层磨玻璃叠加：`.ultraThinMaterial` + 半透明填色 + 微光边框
+- 侧边栏和内容区分离的磨玻璃层次
+- Tab 切换添加过渡动画
+- 底部控制栏增加磨玻璃背景
+- 按钮 hover 增加发光/scale 效果
+- 列表项出场增加 stagger 动画
+
+### 11.4 README 结构修正
+
+**问题**：README.md 默认应为纯中文，但目前中英文混在一个文件。
+
+**修复方案**：
+
+- `README.md` 仅保留中文内容 + 顶部链接 "English → README_EN.md"
+- `README_EN.md` 仅保留英文内容 + 顶部链接 "中文 → README.md"
+- 修正过时或不准确的内容
+- 增加 Ollama 环境变量配置说明
+- 增加 xattr 签名修复说明

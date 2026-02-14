@@ -15,18 +15,10 @@ struct OllamaGatewayApp: App {
                 .preferredColorScheme(appState.themeMode.colorScheme())
                 .onAppear {
                     setupAppOnce()
-                    // Make title bar transparent
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        for window in NSApp.windows {
-                            window.titlebarAppearsTransparent = true
-                            window.titleVisibility = .hidden
-                            window.isMovableByWindowBackground = true
-                            window.backgroundColor = .clear
-                        }
-                    }
                 }
         }
         .defaultSize(width: 900, height: 600)
+        .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button(L10n.about) {
@@ -141,7 +133,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
 
         // Status indicator
-        let gwLabel = appState?.serverStatus.isRunning == true
+        let gwLabel =
+            appState?.serverStatus.isRunning == true
             ? "Ollama Gateway: \(L10n.running)" : "Ollama Gateway: \(L10n.stopped)"
         let statusIcon = appState?.serverStatus.isRunning == true ? "🟢" : "🔴"
         let statusItem = NSMenuItem(
