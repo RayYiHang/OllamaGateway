@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - Cloudflare Tunnel Manager
+// MARK: - Cloudflare Tunnel Manager (Self-contained)
 
 @MainActor
 final class CloudflareTunnel {
@@ -8,63 +8,100 @@ final class CloudflareTunnel {
     private var outputPipe: Pipe?
     private weak var appState: AppState?
 
+    /// Directory for storing the downloaded cloudflared binary
+    nonisolated private static var supportDir: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return appSupport.appendingPathComponent("OllamaGateway", isDirectory: true)
+    }
+
+    /// Path to the local cloudflared binary
+    nonisolated private static var binaryPath: URL {
+        supportDir.appendingPathComponent("cloudflared")
+    }
+
     init(appState: AppState) {
         self.appState = appState
     }
 
-    // MARK: - Check Installation
+    // MARK: - Binary Management
 
+    /// Check if cloudflared binary exists locally
     nonisolated static func isInstalled() -> Bool {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/which")
-        process.arguments = ["cloudflared"]
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        do {
-            try process.run()
-            process.waitUntilExit()
-            return process.terminationStatus == 0
-        } catch {
-            return false
-        }
+        FileManager.default.isExecutableFile(atPath: binaryPath.path)
     }
 
-    nonisolated static func cloudflaredPath() -> String? {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/which")
-        process.arguments = ["cloudflared"]
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        do {
-            try process.run()
-            process.waitUntilExit()
-            if process.terminationStatus == 0 {
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                return String(data: data, encoding: .utf8)?.trimmingCharacters(
-                    in: .whitespacesAndNewlines)
-            }
-        } catch {}
-        return nil
+    /// Download cloudflared from GitHub Releases if not present
+    private func ensureBinary() async throws {
+        if Self.isInstalled() { return }
+
+        appState?.tunnelStatus = .downloading
+
+        // Determine architecture
+        #if arch(arm64)
+        let archSuffix = "arm64"
+        #else
+        let archSuffix = "amd64"
+        #endif
+
+        let urlString = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-\(archSuffix).tgz"
+        guard let url = URL(string: urlString) else {
+            throw NSError(domain: "CloudflareTunnel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid download URL"])
+        }
+
+        // Create support directory
+        try FileManager.default.createDirectory(at: Self.supportDir, withIntermediateDirectories: true)
+
+        // Download
+        let (tempURL, _) = try await URLSession.shared.download(from: url)
+        let tgzPath = Self.supportDir.appendingPathComponent("cloudflared.tgz")
+
+        // Move downloaded file
+        if FileManager.default.fileExists(atPath: tgzPath.path) {
+            try FileManager.default.removeItem(at: tgzPath)
+        }
+        try FileManager.default.moveItem(at: tempURL, to: tgzPath)
+
+        // Extract with tar
+        let tar = Process()
+        tar.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
+        tar.arguments = ["-xzf", tgzPath.path, "-C", Self.supportDir.path]
+        try tar.run()
+        tar.waitUntilExit()
+
+        guard tar.terminationStatus == 0 else {
+            throw NSError(domain: "CloudflareTunnel", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to extract cloudflared"])
+        }
+
+        // chmod +x
+        let chmod = Process()
+        chmod.executableURL = URL(fileURLWithPath: "/bin/chmod")
+        chmod.arguments = ["755", Self.binaryPath.path]
+        try chmod.run()
+        chmod.waitUntilExit()
+
+        // Cleanup tgz
+        try? FileManager.default.removeItem(at: tgzPath)
+
+        guard Self.isInstalled() else {
+            throw NSError(domain: "CloudflareTunnel", code: 3, userInfo: [NSLocalizedDescriptionKey: "cloudflared binary not found after extraction"])
+        }
     }
 
     // MARK: - Start Tunnel
 
     func start() {
-        if Self.isInstalled() {
-            startTunnel()
-        } else {
-            appState?.tunnelStatus = .notInstalled
+        Task {
+            do {
+                try await ensureBinary()
+                startTunnel()
+            } catch {
+                appState?.tunnelStatus = .error(error.localizedDescription)
+            }
         }
     }
 
     private func startTunnel() {
         guard let appState = appState else { return }
-        guard let cfPath = Self.cloudflaredPath() else {
-            appState.tunnelStatus = .notInstalled
-            return
-        }
 
         // Stop any existing tunnel
         stopSync()
@@ -72,14 +109,14 @@ final class CloudflareTunnel {
         appState.tunnelStatus = .starting
 
         let proc = Process()
-        proc.executableURL = URL(fileURLWithPath: cfPath)
+        proc.executableURL = Self.binaryPath
         proc.arguments = [
             "tunnel", "--url", "http://localhost:\(appState.config.port)",
         ]
 
         let pipe = Pipe()
         proc.standardOutput = pipe
-        proc.standardError = pipe  // cloudflared outputs URL on stderr
+        proc.standardError = pipe
 
         outputPipe = pipe
         process = proc
@@ -89,22 +126,19 @@ final class CloudflareTunnel {
             let data = handle.availableData
             guard !data.isEmpty else { return }
             let output = String(data: data, encoding: .utf8) ?? ""
-
-            // Parse tunnel URL from cloudflared output
-            // Pattern: "https://xxxxx.trycloudflare.com" or similar
             Task { @MainActor [weak self] in
                 self?.parseTunnelOutput(output)
             }
         }
 
         // Handle process termination
-        proc.terminationHandler = { [weak self] proc in
+        proc.terminationHandler = { [weak self] terminatedProc in
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
-                if proc.terminationStatus != 0 {
+                if terminatedProc.terminationStatus != 0 {
                     if case .starting = self.appState?.tunnelStatus {
                         self.appState?.tunnelStatus = .error(
-                            "Process exited with code \(proc.terminationStatus)")
+                            "Process exited with code \(terminatedProc.terminationStatus)")
                     }
                 } else {
                     self.appState?.tunnelStatus = .stopped
@@ -132,32 +166,17 @@ final class CloudflareTunnel {
         outputPipe?.fileHandleForReading.readabilityHandler = nil
         if let proc = process, proc.isRunning {
             proc.terminate()
-            // waitUntilExit() can block — use short timeout approach
-            DispatchQueue.global().async {
-                proc.waitUntilExit()
-            }
+            proc.waitUntilExit()
         }
         process = nil
         outputPipe = nil
     }
 
-    deinit {
-        // nonisolated — avoid accessing @MainActor properties directly.
-        // The terminationHandler or app lifecycle should have already stopped the process.
-    }
-
     // MARK: - Parse Output
 
     private func parseTunnelOutput(_ output: String) {
-        // cloudflared outputs lines like:
-        // "INF +----------------------------+"
-        // "INF |  https://xxx.trycloudflare.com  |"
-        // OR: "INF Registered tunnel connection ... url=https://xxx.trycloudflare.com"
-        // OR newer: just a URL in the output
-
         let lines = output.components(separatedBy: .newlines)
         for line in lines {
-            // Look for HTTPS URL patterns
             if let range = line.range(
                 of: "https://[a-zA-Z0-9\\-]+\\.trycloudflare\\.com", options: .regularExpression)
             {
@@ -165,7 +184,6 @@ final class CloudflareTunnel {
                 appState?.tunnelStatus = .running(url: url)
                 return
             }
-            // Also match custom domain URLs from cloudflared
             if let range = line.range(
                 of: "https://[a-zA-Z0-9\\-\\.]+", options: .regularExpression),
                 line.contains("trycloudflare") || line.contains("cfargotunnel")

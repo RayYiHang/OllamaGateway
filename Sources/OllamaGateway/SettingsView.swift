@@ -271,7 +271,7 @@ struct SettingsView: View {
                     // Start / Stop button
                     Button(action: toggleTunnel) {
                         HStack(spacing: 6) {
-                            if case .starting = appState.tunnelStatus {
+                            if appState.tunnelStatus.isBusy {
                                 ProgressView()
                                     .scaleEffect(0.5)
                                     .frame(width: 12, height: 12)
@@ -292,11 +292,11 @@ struct SettingsView: View {
                             RoundedRectangle(cornerRadius: 8)
                                 .fill(
                                     appState.tunnelStatus.isRunning
-                                        ? theme.error : Color(r: 245, g: 158, b: 11))
+                                        ? theme.error : theme.accent)
                         )
                     }
                     .buttonStyle(.plain)
-                    .disabled(appState.tunnelStatus == .starting)
+                    .disabled(appState.tunnelStatus.isBusy)
                 }
 
                 // Public URL display
@@ -335,39 +335,16 @@ struct SettingsView: View {
                     )
                 }
 
-                // Not installed warning
-                if case .notInstalled = appState.tunnelStatus {
+                // Downloading indicator
+                if case .downloading = appState.tunnelStatus {
                     Divider().opacity(0.3)
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 12))
-                                .foregroundColor(theme.warning)
-                            Text(L10n.tunnelNotInstalled)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(theme.primaryText)
-                        }
-                        Text(L10n.tunnelInstallHint)
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .scaleEffect(0.6)
+                            .frame(width: 14, height: 14)
+                        Text(L10n.tunnelDownloading)
                             .font(.system(size: 11))
                             .foregroundColor(theme.secondaryText)
-
-                        Button(action: {
-                            if let url = URL(
-                                string:
-                                    "https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/"
-                            ) {
-                                NSWorkspace.shared.open(url)
-                            }
-                        }) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "arrow.up.right.square")
-                                    .font(.system(size: 10))
-                                Text(L10n.tunnelInstallLink)
-                                    .font(.system(size: 11, weight: .medium))
-                            }
-                            .foregroundColor(theme.accent)
-                        }
-                        .buttonStyle(.plain)
                     }
                 }
 
@@ -404,20 +381,20 @@ struct SettingsView: View {
     private var tunnelStatusLabel: String {
         switch appState.tunnelStatus {
         case .stopped: return L10n.stopped
+        case .downloading: return L10n.tunnelDownloading
         case .starting: return L10n.starting
         case .running: return L10n.tunnelRunning
         case .error: return L10n.errorLabel
-        case .notInstalled: return L10n.tunnelNotInstalled
         }
     }
 
     private var tunnelStatusColor: Color {
         switch appState.tunnelStatus {
         case .stopped: return theme.secondaryText
+        case .downloading: return theme.warning
         case .starting: return theme.warning
         case .running: return theme.success
         case .error: return theme.error
-        case .notInstalled: return theme.warning
         }
     }
 

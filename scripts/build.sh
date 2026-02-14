@@ -24,6 +24,10 @@ if [ "$ARCH" = "universal" ]; then
     echo "📦 Building Universal Binary (arm64 + x86_64)..."
     swift build $SWIFT_FLAGS --arch arm64 --arch x86_64
     BINARY_PATH=".build/apple/Products/Release/$APP_NAME"
+elif [ "$ARCH" != "$(uname -m)" ]; then
+    echo "📦 Cross-compiling for $ARCH..."
+    swift build $SWIFT_FLAGS --arch "$ARCH"
+    BINARY_PATH=".build/apple/Products/Release/$APP_NAME"
 else
     swift build $SWIFT_FLAGS
     BINARY_PATH=".build/$BUILD_MODE/$APP_NAME"

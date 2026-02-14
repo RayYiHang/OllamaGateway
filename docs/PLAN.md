@@ -144,10 +144,10 @@ ollamafastapi/
 ```swift
 enum TunnelStatus {
     case stopped
+    case downloading
     case starting
     case running(url: String)
     case error(String)
-    case notInstalled
 }
 ```
 
@@ -194,7 +194,10 @@ enum TunnelStatus {
 ### 10.1 GitHub Actions CI 修复
 
 - tag 格式从 `v*.*.*` 改为同时支持 `*.*.*`（无 v 前缀）
-- Release body 增加完整 changelog、签名修复说明、sha256 校验
+- `macos-13` runner 已废弃，改为 `macos-14` 统一构建，通过 `--arch x86_64` 交叉编译
+- `build.sh` 支持 `ARCH` 环境变量交叉编译
+- `create-dmg.sh` 使用 `ARCH` 环境变量命名 DMG
+- Release body 增加完整 changelog、签名修复说明
 
 ### 10.2 内嵌 cloudflared 零依赖
 

@@ -17,11 +17,9 @@ jobs:
         strategy:
             matrix:
                 include:
-                    - runner: macos-14 # Apple Silicon
-                      arch: arm64
-                    - runner: macos-13 # Intel
-                      arch: x86_64
-        runs-on: ${{ matrix.runner }}
+                    - arch: arm64
+                    - arch: x86_64
+        runs-on: macos-14
         steps:
             - uses: actions/checkout@v4
 
@@ -46,6 +44,7 @@ jobs:
             - name: Create DMG
               env:
                   APP_VERSION: ${{ steps.version.outputs.version }}
+                  ARCH: ${{ matrix.arch }}
               run: |
                   chmod +x scripts/create-dmg.sh
                   bash scripts/create-dmg.sh
@@ -89,12 +88,14 @@ jobs:
                       1. 下载对应架构的 `.dmg` 文件
                       2. 打开 DMG，将 **Ollama Gateway** 拖入 **Applications** 文件夹
                       3. 首次打开：右键点击应用 → "打开"
+                      4. 如遇 macOS 安全提示，在终端执行：`xattr -cr /Applications/OllamaGateway.app`
 
                       ---
 
                       1. Download the `.dmg` for your architecture
                       2. Open DMG, drag **Ollama Gateway** to **Applications**
                       3. First launch: Right-click → "Open"
+                      4. If blocked by macOS, run: `xattr -cr /Applications/OllamaGateway.app`
                   draft: false
                   prerelease: false
                   files: artifacts/**/*.dmg

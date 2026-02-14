@@ -10,7 +10,8 @@ APP_NAME="OllamaGateway"
 APP_VERSION="${APP_VERSION:-1.0.0}"
 
 APP_PATH="$PROJECT_DIR/build/$APP_NAME.app"
-DMG_NAME="${APP_NAME}-v${APP_VERSION}-$(uname -m)"
+DMG_ARCH="${ARCH:-$(uname -m)}"
+DMG_NAME="${APP_NAME}-v${APP_VERSION}-${DMG_ARCH}"
 DMG_PATH="$PROJECT_DIR/build/${DMG_NAME}.dmg"
 STAGING_DIR="$PROJECT_DIR/build/dmg-staging"
 

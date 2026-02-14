@@ -1,0 +1,14 @@
+fix: resolve build errors and CI runner deprecation
+
+- CloudflareTunnel.swift: rewrite with auto-download (was reverted by merge)
+  - Remove .notInstalled status, use .downloading for auto-download flow
+  - Mark supportDir/binaryPath as nonisolated to fix actor isolation error
+- SettingsView.swift: replace .notInstalled references with .downloading UI
+  - Fix tunnel button color (amber -> theme.accent)
+  - Use .isBusy for disabled state instead of .starting only
+- CI: replace deprecated macos-13 runner with macos-14 cross-compilation
+  - build.sh: support ARCH env var for --arch cross-compile
+  - create-dmg.sh: use ARCH env var for DMG filename
+  - release.yml: single macos-14 runner with matrix arch
+  - Add xattr fix instructions to release notes
+- PLAN.md: update TunnelStatus enum, document CI changes
