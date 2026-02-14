@@ -27,7 +27,7 @@ if [ "$ARCH" = "universal" ]; then
 elif [ "$ARCH" != "$(uname -m)" ]; then
     echo "📦 Cross-compiling for $ARCH..."
     swift build $SWIFT_FLAGS --arch "$ARCH"
-    BINARY_PATH=".build/apple/Products/Release/$APP_NAME"
+    BINARY_PATH=".build/${ARCH}-apple-macosx/${BUILD_MODE}/$APP_NAME"
 else
     swift build $SWIFT_FLAGS
     BINARY_PATH=".build/$BUILD_MODE/$APP_NAME"
