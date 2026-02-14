@@ -10,7 +10,9 @@ final class CloudflareTunnel {
 
     /// Directory for storing the downloaded cloudflared binary
     nonisolated private static var supportDir: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let appSupport = FileManager.default.urls(
+            for: .applicationSupportDirectory, in: .userDomainMask
+        ).first!
         return appSupport.appendingPathComponent("OllamaGateway", isDirectory: true)
     }
 
@@ -38,18 +40,22 @@ final class CloudflareTunnel {
 
         // Determine architecture
         #if arch(arm64)
-        let archSuffix = "arm64"
+            let archSuffix = "arm64"
         #else
-        let archSuffix = "amd64"
+            let archSuffix = "amd64"
         #endif
 
-        let urlString = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-\(archSuffix).tgz"
+        let urlString =
+            "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-\(archSuffix).tgz"
         guard let url = URL(string: urlString) else {
-            throw NSError(domain: "CloudflareTunnel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid download URL"])
+            throw NSError(
+                domain: "CloudflareTunnel", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid download URL"])
         }
 
         // Create support directory
-        try FileManager.default.createDirectory(at: Self.supportDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(
+            at: Self.supportDir, withIntermediateDirectories: true)
 
         // Download
         let (tempURL, _) = try await URLSession.shared.download(from: url)
@@ -69,7 +75,9 @@ final class CloudflareTunnel {
         tar.waitUntilExit()
 
         guard tar.terminationStatus == 0 else {
-            throw NSError(domain: "CloudflareTunnel", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to extract cloudflared"])
+            throw NSError(
+                domain: "CloudflareTunnel", code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Failed to extract cloudflared"])
         }
 
         // chmod +x
@@ -83,7 +91,11 @@ final class CloudflareTunnel {
         try? FileManager.default.removeItem(at: tgzPath)
 
         guard Self.isInstalled() else {
-            throw NSError(domain: "CloudflareTunnel", code: 3, userInfo: [NSLocalizedDescriptionKey: "cloudflared binary not found after extraction"])
+            throw NSError(
+                domain: "CloudflareTunnel", code: 3,
+                userInfo: [
+                    NSLocalizedDescriptionKey: "cloudflared binary not found after extraction"
+                ])
         }
     }
 
